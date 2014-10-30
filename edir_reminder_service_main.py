@@ -67,6 +67,7 @@ def main(argv):
 	# start the algorithm
 	try:
 		con = edir_reminder_service.connection.connect_to_ldap(config)
+		print repr(con.search_s("", ldap.SCOPE_SUBTREE, '(&(objectclass=User))', None))
 	except ldap.LDAPError, e:
 		print >> sys.stderr, "Cannot connect to the LDAP server: %s" % str(e)
 		sys.exit(2)
