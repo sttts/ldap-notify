@@ -11,6 +11,6 @@ setup(name='edir-reminder-service',
     #data_files=[
     #	('/etc/edir-reminder-service', ['login.conf', 'password.conf']),
     #],
-    package_data = {'edir_autoyast_ws': ['templates/*', 'static/*/*']},
+    package_data = {'edir_autoyast_ws': ['templates/*']},
     py_modules = ['edir_reminder_service_main']
 )
