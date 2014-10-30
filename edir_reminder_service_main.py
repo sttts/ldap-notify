@@ -4,6 +4,7 @@ import os
 import logging as log
 import getopt
 import edir_reminder_service.config
+import ConfigParser
 
 # add virtualenv path to PYTHON_PATH, so libs are found
 virtualenv_path = os.path.dirname(__file__) + '/env'
@@ -25,7 +26,7 @@ def main(argv):
 
 	# parse arguments	
 	try:
-		opts, args = getopt.getopt(argv, "hcd", ["help", "config=", "dry"])
+		opts, args = getopt.getopt(argv, "hc:d", ["help", "config=", "dry"])
 	except getopt.GetoptError:
 		usage()
 		sys.exit(2)
@@ -43,7 +44,11 @@ def main(argv):
 		sys.exit(2)
 		
 	# load configuration
-	config = edir_reminder_service.config.load(config_file)
+	try:
+		config = edir_reminder_service.config.load(config_file)
+	except ConfigParser.NoOptionError, e:
+		print >> sys.stderr, "Configuration error: %s" % str(e)
+		sys.exit(2)
 
 # run app in standalone mode
 if __name__ == "__main__":
