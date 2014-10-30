@@ -16,7 +16,14 @@ log.basicConfig(level=log.DEBUG if os.environ.get('DEBUG') else log.INFO,
 	format='%(asctime)s %(filename)s:%(lineno)d %(funcName)s() [%(name)s] %(levelname)s: %(message)s')
 
 def usage(): 
-	print('Usage: edit-reminder-server [OPTION]... -c <config_file.conf>')
+	print """
+Usage: edit-reminder-server [OPTION]... -c <config_file.conf>
+
+Parameters:'
+  -h, --help                  show this help
+  -c, --conf                  mandatory parameter: the config file name
+  -d, --dry                   do not send emails, only log what would be done without -d
+"""
 
 def main(argv):
 	# default values
@@ -49,6 +56,8 @@ def main(argv):
 	except ConfigParser.NoOptionError, e:
 		print >> sys.stderr, "Configuration error: %s" % str(e)
 		sys.exit(2)
+		
+	#
 
 # run app in standalone mode
 if __name__ == "__main__":
