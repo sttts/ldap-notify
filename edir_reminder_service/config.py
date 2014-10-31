@@ -12,6 +12,10 @@ HOSTNAME = socket.gethostname()
 default_cfg = StringIO("""\
 [common]
 server = ldap://localhost
+bind_dn =
+bind_password =
+start_tls = false
+ignore_cert = false
 base_context = 
 notify_attribute = pwmNotify
 mail_server_address = localhost
@@ -46,11 +50,16 @@ def load(filename = "login.conf"):
     
     c = {}
     
-    c['server'] = config.get("common", "server")
-    c['base_context'] = config.get("common", "base_context")
-    c['notify_attribute'] = config.get("common", "notify_attribute")
-    c['mail_server_address'] = config.get("common", "mail_server_address")
-    c['log_file_path'] = config.get("common", "log_file_path")
+    c['server'] = config.get("common", "server").strip()
+    c['bind_dn'] = config.get("common", "bind_dn").strip()
+    c['bind_password'] = config.get("common", "bind_password").strip()
+    c['start_tls'] = config.getboolean("common", "start_tls")
+    c['ignore_cert'] = config.getboolean("common", "ignore_cert")
+    c['base_context'] = config.get("common", "base_context").strip()
+    c['expiry_attribute'] = config.get("common", "expiry_attribute").strip()
+    c['notify_attribute'] = config.get("common", "notify_attribute").strip()
+    c['mail_server_address'] = config.get("common", "mail_server_address").strip()
+    c['log_file_path'] = config.get("common", "log_file_path").strip()
     
     c['admin'] = {}
     c['admin']['from_address'] = config.get("admin", "from_address")
