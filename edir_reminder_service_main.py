@@ -22,7 +22,10 @@ Usage: edit-reminder-server [OPTION]... -c <config_file.conf>
 Parameters:'
   -h, --help                  show this help
   -c, --conf                  mandatory parameter: the config file name
-  --dry                   do not send emails, only log what would be done without -d
+  -k                          ignore SSL/TLS certificates
+  --dry                       do not send emails, only log what would be done without --dry
+  -v, --verbose               verbose logging
+  -d, --debug                 debug logging
 """
 
 def main(argv):
@@ -31,31 +34,39 @@ def main(argv):
 	global DRY_RUN
 	DRY_RUN = False
 	global DEBUG
-	DEBUG = os.environ.get('DEBUG', False)
+	DEBUG = 0
+	global VERBOSE
+	VERBOSE = False
+	global IGNORE_CERT
+	IGNORE_CERT = False
 
 	# parse arguments	
 	try:
-		opts, args = getopt.getopt(argv, "hc:d", ["help", "config=", "dry", "--debug"])
+		opts, args = getopt.getopt(argv, "dhc:vk", ["help", "config=", "dry", "debug", "verbose"])
 	except getopt.GetoptError:
 		usage()
 		sys.exit(2)
 	for opt, arg in opts:
-		if opt in ("-h", "--help"):
+		if opt in ('-h', '--help'):
 			usage()
 			sys.exit()
-		elif opt in ('--dry'):
+		elif opt in ('--dry', ):
 			DRY_RUN = True
-		elif opt in ('-d','--debug'):
-			DEBUG = True
+		elif opt in ('-d', '--debug'):
+			DEBUG += 1
+		elif opt in ('-v', '--verbose'):
+			VERBOSE = True
 		elif opt in ('-c', '--conf'):
 			config_file = arg
+		elif opt in ('-k',):
+			IGNORE_CERT = True
 
 	if not config_file or args:
 		usage()
 		sys.exit(2)
 		
 	# setup logging
-	log.basicConfig(level=log.DEBUG if DEBUG else log.WARN,
+	log.basicConfig(level=log.DEBUG if DEBUG else log.INFO if VERBOSE else log.WARN,
 				format='%(asctime)s %(filename)s:%(lineno)d %(funcName)s() [%(name)s] %(levelname)s: %(message)s')
 	
 	# load configuration
@@ -64,6 +75,9 @@ def main(argv):
 	except ConfigParser.NoOptionError, e:
 		print >> sys.stderr, "Configuration error: %s" % str(e)
 		sys.exit(2)
+		
+	# overwrite values from command line
+	config.ignore_cert = config.ignore_cert or IGNORE_CERT
 		
 	# start the algorithm
 	try:
