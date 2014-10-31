@@ -5,6 +5,7 @@ import logging as log
 import getopt
 import ConfigParser
 import ldap
+import json
 
 import edir_reminder_service.config
 import edir_reminder_service.connection
@@ -67,10 +68,17 @@ def main(argv):
 	# start the algorithm
 	try:
 		con = edir_reminder_service.connection.connect_to_ldap(config)
-		print repr(con.search_s("", ldap.SCOPE_SUBTREE, '(&(objectclass=User))', None))
+		import edir_reminder_service.algorithm as algorithm
+		for rule in config.rules:
+			users = algorithm.users_for_rule(config, con, rule)
+			if DEBUG > 1:
+				print json.dumps({'days': rule.days, 'users': users}, sort_keys=True, indent=4, separators=(',', ': '))
 	except ldap.LDAPError, e:
-		print >> sys.stderr, "Cannot connect to the LDAP server: %s" % str(e)
+		msg = e.args[0]['desc'] if 'desc' in e.args[0] else str(e)
+		print >> sys.stderr, "LDAP error: %s" % msg
 		sys.exit(2)
+	except KeyboardInterrupt:
+		sys.exit(253)
 
 # run app in standalone mode
 if __name__ == "__main__":
