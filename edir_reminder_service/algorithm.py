@@ -1,35 +1,50 @@
 import ldap
+from datetime import timedelta, datetime
 import logging
 log = logging.getLogger('edir-reminder-server')
 					
-def users(config, con, fltr=""):
+import edir_reminder_service.globals as g
+
+def search_users(config, con, fltr=""):
 	attr_list = ["mail", "cn", config.notify_attribute, config.expiry_attribute]
 	log.info("Searching for %s at '%s' and its subtree" % (fltr, config.base_context))
-	users = con.search_s(config.base_context, ldap.SCOPE_SUBTREE, "(&(objectclass=User)%s)" % fltr, attr_list)
+	users = con.search_s(config.base_context, ldap.SCOPE_SUBTREE, "(&(objectclass=User)(objectclass=pwnUser)%s)" % fltr, attr_list)
 	return users
 
 def users_for_rule(config, con, rule):
-	return users(config, con, "(&(%s>=%s)(!(%s>=%s)))" % (config.expiry_attribute, rule.start, config.expiry_attribute, rule.end))
+	users = search_users(config, con, "(&(%s>=%s)(!(%s>=%s)))" % (config.expiry_attribute, rule.start, config.expiry_attribute, rule.end))	
+	filtered_users = []
+	skipped_users = []
+	for cn, ldap_user in users:
+		# filter out those whose notify attribute shows a notification in less of the days of this rule
+		if config.notify_attribute in ldap_user:
+			try:
+				ts, last_rule = ldap_user[config.notify_attribute][0].split(':')
+				ts = datetime.strptime(ts, g.LDAP_TIME_FORMAT)
+				expiry = datetime.strptime(ldap_user[config.expiry_attribute][0])
+				delta = expiry - ts
+				if delta < timedelta(days=rule.days):
+					log.info("Skipping %s because reminder %s was sent before: %s" % (cn, last_rule, ldap_user[config.notify_attribute]))
+					skipped_users.append( (cn, ldap_user) )
+					continue
+			except ValueError, e:
+				log.warn('Skipping %s because: %s' % (cn, str(e)))
+				continue
+			except Exception, e:
+				log.exception(e)
+				continue
 
-# 	ldap_filter = self._mkfilter(rule)
-# 	search_attr = rule.search_attr
-# 	for base in self.base:
-# 		for u in self._search(base, ldap_filter, search_attr):
-# 			try:
-# 				user = {'dn': u[0], 'cn': u[1]['cn'][0],
-# 						'mail': u[1]['mail'][0],
-# 						'expires': u[1][search_attr][0]}
-# 				self.log.debug('Found User ' + u[0] + 
-# 							   ' with expiration date ' + 
-# 							   user['expires'])
-# 				user['notification_rule'] = rule.name
-# 				user['notification_id'] = user['expires'] + ':' + user['notification_rule']
-# 				user['notifications'] = u[1][self.notification_attr]
-# 				if user['notification_id'] in user['notifications']:
-# 					self.log.debug("User already been notified")
-# 					continue
-# 				yield user
-# 			except KeyError:
-# 				self.log.warn("Cannot Notify User. " + 
-# 							  "A necessary Attribute is missing " + 
-# 							  u[0])
+		log.debug('Found %s with %s=%s to be notified with rule %i' % (cn, config.expiry_attribute, ldap_user[config.expiry_attribute][0], rule.days))
+		filtered_users.append( (cn, ldap_user) )
+
+	return filtered_users, skipped_users
+
+
+def mark_user_notified(config, con, user, rule):
+	cn, _ = user
+	marker = g.NOW.strftime(g.LDAP_TIME_FORMAT) + ':' + str(rule.days)
+	log.debug('Marking user %s notified with %s' % (cn, marker))
+	if not g.DRY_RUN:
+		con.modify_s(cn, [
+			(ldap.MOD_REPLACE, config.notify_attribute, marker)
+		])

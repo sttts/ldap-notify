@@ -1,11 +1,11 @@
 import os
 import socket
-import edir_reminder_service.utils as utils
 from StringIO import StringIO
 import logging
 log = logging.getLogger('edir-reminder-server')
 
-DEBUG = utils.str2bool(os.environ.get('DEBUG', "false"))
+import edir_reminder_service.utils as utils
+import edir_reminder_service.globals as g
 
 SERVICE_NAME = "eDir Login/Password Email Reminder Service"
 HOSTNAME = socket.gethostname()
@@ -49,7 +49,10 @@ def load(filename = "login.conf"):
     import ConfigParser
     config = ConfigParser.SafeConfigParser()
     config.readfp(default_cfg)
-    config.read('login.conf')
+    
+    if filename:
+        log.info('Reading config file %s' % filename)
+        config.read(filename)
     
     c = {}
     
@@ -93,20 +96,17 @@ def load(filename = "login.conf"):
             "filename": config.get(section, "filename").strip() if config.has_option(section, "filename") else os.path.dirname(__file__) + "/templates/notify.tmpl"
         })
 
-    c['rules'] = sorted(c['rules'], key=lambda r: r['days'], reverse=True)
+    c['rules'] = sorted(c['rules'], key=lambda r: r['days'])
     
     # compute time interval [start:end[ of each rule
-    from datetime import timedelta, datetime
-    now = datetime.utcnow()
-    prev_rule = None
-    for rule in c['rules']:
-        start = now + timedelta(days=rule['days'])
-        if prev_rule:
-            prev_rule['end'] = start.strftime('%Y%m%d%H%M%SZ')
-        rule['start'] = start.strftime('%Y%m%d%H%M%SZ')
-        prev_rule = rule
-    if prev_rule:
-        prev_rule['end'] = now.strftime('%Y%m%d%H%M%SZ')
+    from datetime import timedelta
+    start = g.NOW
+    for rule in c['rules']:        
+        rule['start'] = start.strftime(g.LDAP_TIME_FORMAT)
+        end = g.NOW + timedelta(days=rule['days'])
+        rule['end'] = end.strftime(g.LDAP_TIME_FORMAT)
+        
+        start = end
         
     log.debug(repr(c['rules']))
 
