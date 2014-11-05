@@ -26,10 +26,11 @@ Parameters:'
   -h, --help                  show this help
   -c, --conf                  mandatory parameter: the config file name
   -k                          ignore SSL/TLS certificates
-  --test                      do not send emails, only log what would be done without --test
   -v, --verbose               verbose logging
   -d, --debug                 debug logging
-  -t, --time                  simulate current UTC time (format: 20141031162633Z)
+  --test <test-address>       send all mails to the given address
+  --dry                       do not send emails or modify anything in ldap
+  --time <timestamp>      simulate current UTC time (format: 20141031162633Z)
 """
 
 def main(argv):
@@ -41,30 +42,32 @@ def main(argv):
 	config_file = None
 	dry = False
 	test = False
+	test_address = None
 
 	# parse arguments	
 	try:
-		opts, args = getopt.getopt(argv, "hc:t:dvkt", ["help", "config=", "time=", "test", 'dry', "debug", "verbose"])
+		opts, args = getopt.getopt(argv, "hc:dvk", ["help", "config=", "time=", "test=", 'dry', "debug", "verbose"])
 	except getopt.GetoptError:
 		usage()
 		sys.exit(2)
 	for opt, arg in opts:
-		if opt in ('-h', '--help'):
+		if opt in ['-h', '--help']:
 			usage()
 			sys.exit()
-		elif opt in ('--test',):
+		elif opt in ['--test']:
 			test = True
-		elif opt in ('--dry',):
+			test_address = arg
+		elif opt in ['--dry']:
 			dry = True
-		elif opt in ('-d', '--debug'):
+		elif opt in ['-d', '--debug']:
 			g.DEBUG += 1
-		elif opt in ('-v', '--verbose'):
+		elif opt in ['-v', '--verbose']:
 			g.VERBOSE = True
-		elif opt in ('-c', '--conf'):
+		elif opt in ['-c', '--conf']:
 			config_file = arg
-		elif opt in ('-t', '--time'):
+		elif opt in ['--time']:
 			g.NOW = datetime.strptime(arg, g.LDAP_TIME_FORMAT)
-		elif opt in ('-k', ):
+		elif opt in ['-k']:
 			ignore_cert = True
 
 	if not config_file or args:
@@ -83,6 +86,7 @@ def main(argv):
 		config.ignore_cert = config.ignore_cert or ignore_cert
 		config.test.dry = config.test.dry or dry
 		config.test.test = config.test.test or test
+		config.test.to_address = test_address or config.test.to_address
 
 		# start the algorithm
 		con = edir_reminder_service.connection.connect_to_ldap(config)
