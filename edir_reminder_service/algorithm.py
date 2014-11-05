@@ -6,9 +6,9 @@ log = logging.getLogger('edir-reminder-server')
 import edir_reminder_service.globals as g
 
 def search_users(config, con, fltr=""):
-	attr_list = ["mail", "cn", config.notify_attribute, config.expiry_attribute]
-	log.info("Searching for %s at '%s' and its subtree" % (fltr, config.base_context))
-	users = con.search_s(config.base_context, ldap.SCOPE_SUBTREE, "(&(objectclass=User)(objectclass=pwnUser)%s)" % fltr, attr_list)
+	attr_list = ["mail", "cn", "loginDisabled", config.notify_attribute, config.expiry_attribute]
+	log.info("Searching for (&(objectclass=pwmUser)%s) at '%s' and its subtree" % (fltr, config.base_context))
+	users = con.search_s(config.base_context, ldap.SCOPE_SUBTREE, "(&(objectclass=pwmUser)%s)" % fltr, attr_list)
 	return users
 
 def users_for_rule(config, con, rule):
