@@ -11,12 +11,12 @@ def connect_to_ldap(config):
     # configure TLS
     start_tls = False
     if config.server.startswith('ldaps:') or config.start_tls:
-        log.info("Demanding SSL trusted certificate")
+        log.info("Using SSL/TLS")
         ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_DEMAND)
         start_tls = True
     
     if config.ignore_cert:
-        log.info("Ignoring SSL certificate")
+        log.info("Ignoring SSL/TLS certificate")
         ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_ALLOW)
     
     log.info('Connecting to ' + config.server)

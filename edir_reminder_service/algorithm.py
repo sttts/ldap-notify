@@ -43,7 +43,7 @@ def users_for_rule(config, con, rule):
 def mark_user_notified(config, con, user, rule):
 	cn, _ = user
 	marker = g.NOW.strftime(g.LDAP_TIME_FORMAT) + ':' + str(rule.days)
-	log.debug('Marking user %s notified with %s' % (cn, marker))
+	log.info('%sMarking user %s notified with %s' % ('DRY: ' if g.DRY_RUN else '', cn, marker))
 	if not g.DRY_RUN:
 		con.modify_s(cn, [
 			(ldap.MOD_REPLACE, config.notify_attribute, marker)
