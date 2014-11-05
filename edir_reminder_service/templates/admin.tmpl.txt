@@ -1,0 +1,26 @@
+The eDirectory Reminder Service completed a check-run for expiring passwords.
+
+Without email:        $users_without_email_length
+Without grace logins: $no_grace_logins_length
+Failed:               $failed_users_length
+Notified:             $notified_users_length
+
+
+The Following Users could not be notified because of missing E-Mail addresses:
+
+$users_without_email
+
+
+The Following Users could not be notified because they ran out of grace logins:
+
+$no_grace_logins
+
+
+The Following Users could not be notified for unknown reason (read the logs):
+
+$failed_users
+
+
+The Following Users were successfully notified:
+
+$notified_users

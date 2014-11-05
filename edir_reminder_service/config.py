@@ -36,7 +36,7 @@ from_address = {root_mail!s}
 to_address = {admin_mail!s}
 from_text = {service_name!s}
 subject = Login will expire soon
-filename = {admin_filename!s}
+text_template = {text_template!s}
 
 [test]
 dry = false
@@ -49,7 +49,7 @@ restrict_to_users =
     root_mail="root@" + HOSTNAME,
     admin_mail="admin@" + HOSTNAME,
     service_name=SERVICE_NAME,
-    admin_filename=os.path.dirname(__file__) + "/templates/admin.tmpl"
+    text_template=os.path.dirname(__file__) + "/templates/admin.tmpl.txt"
 ))
 
 # load config file
@@ -86,7 +86,7 @@ def load(filename = "login.conf"):
     c['admin']['to_address'] = config.get("admin", "to_address").strip()
     c['admin']['from_text'] = config.get("admin", "from_text").strip()
     c['admin']['subject'] = config.get("admin", "subject").strip()
-    c['admin']['filename'] = config.get("admin", "filename").strip()
+    c['admin']['text_template'] = config.get("admin", "text_template").strip()
     
     c['test'] = {}
     c['test']['test'] = config.getboolean("test", "test")

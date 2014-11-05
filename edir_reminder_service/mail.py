@@ -43,11 +43,15 @@ class MailHandler(object):
 		except SMTPException:
 			raise
 
-	def __del__(self):
+	def close_con(self):
 		if self.con:
 			log.info("Closing Connection to SMTP Server")
 			self.con.quit()
-			
+			self.con = None
+		
+	def __del__(self):
+		self.close_con()
+	
 	def template(self, filename):
 		if filename in self.templates:
 			return self.templates[filename]
@@ -58,7 +62,7 @@ class MailHandler(object):
 		
 		return self.templates[filename]
 
-	def send_user_mail(self, rule, user, alternative_to=None):
+	def send_user_mail(self, rule, user):
 		expiry_time = datetime.strptime(user.expiry, '%Y%m%d%H%M%SZ')
 		template_env = {
 			'expiry_date': expiry_time.date().strftime(locale.nl_langinfo(locale.D_FMT)),
@@ -71,10 +75,7 @@ class MailHandler(object):
 		}
 		
 		# send where?
-		if not self.config.test.test:
-			to = alternative_to or user.mail
-		else:
-			to = self.config.test.to_address
+		to = user.mail if not self.config.test.test else self.config.test.to_address
 		
 		# send what?
 		if rule.html_template:
@@ -102,5 +103,55 @@ class MailHandler(object):
 		log.info('%sSending mail for %s to %s: %s' % ('DRY: ' if self.config.test.dry else 'TEST:' if self.config.test.test else '',
 													  user.cn, to, msg['Subject']))
 		if not self.config.test.dry:
-			smtp_con = self.smtp_connection()
-			raise Exception('tried to send') #self.s.sendmail(rule.from_address, to, msg.as_string())
+			try:
+				smtp_con = self.smtp_connection()
+				raise Exception('tried to send') #self.s.sendmail(rule.from_address, to, msg.as_string())
+			except SMTPException:
+				self.close_con()
+				raise
+		
+	def send_admin_report(self, config, notified_lines, failed_lines, without_email_lines, no_grace_logins_lines):
+		# send where?
+		to = config.admin.to_address if not self.config.test.test else self.config.test.to_address
+		
+		# send what
+		template_env = {
+			'notified_users': '\n'.join(notified_lines),
+			'failed_users': '\n'.join(failed_lines),
+			'users_without_email': '\n'.join(without_email_lines),
+			'no_grace_logins': '\n'.join(no_grace_logins_lines),
+			
+			'notified_users_length': len(notified_lines),
+			'failed_users_length': len(failed_lines),
+			'users_without_email_length': len(without_email_lines),
+			'no_grace_logins_length': len(no_grace_logins_lines),
+		}
+		admin_template = self.template(config.admin.text_template)
+		msg = admin_template.substitute(template_env)
+		
+		# setting mail headers
+		subject = Template(config.admin.subject).substitute(template_env)
+		header = """
+Content-Type: text/plain; charset="utf-8"
+Subject: %s
+From: %s
+To: %s
+
+""" % (
+	subject,
+	(config.admin.from_text + '<' + config.admin.from_address +'>') if config.admin.from_text else config.admin.from_address,
+	to
+)
+
+		# send message
+		log.info('%sSending admin report to %s: %s' % ('DRY: ' if self.config.test.dry else 'TEST:' if self.config.test.test else '',
+													  to, subject))
+		if self.config.test.dry:
+			print str(header+msg)
+		else:
+			try:
+				smtp_con = self.smtp_connection()
+				raise Exception('tried to send') #self.s.sendmail(rule.from_address, to, header+msg)
+			except SMTPException:
+				self.close_con()
+				raise

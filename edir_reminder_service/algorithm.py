@@ -135,31 +135,14 @@ def user_to_rule_line(user, rule):
 
 
 def notify_admin(config, con, notified_users, failed_users, users_without_email, users_without_grace_logins):
-    print "Betreff: Account Expiry Report"
-    if users_without_email:
-        print
-        print
-        print "The Following Users could not be notified because of missing E-Mail addresses:"
-        for user in users_without_email:
-            print user_to_rule_line(user, user.rule)
+    mailer = mail.MailHandler(config)
+    
+    notified_lines = list(user_to_rule_line(user, user.rule) for user in notified_users)
+    failed_lines = list(user_to_rule_line(user, user.rule) for user in failed_users)
+    without_email_lines = list(user_to_rule_line(user, user.rule) for user in users_without_email)
+    no_grace_logins_lines = list(user_to_rule_line(user, user.rule) for user in users_without_grace_logins)
+    
+    mailer.send_admin_report(config, notified_lines, failed_lines, without_email_lines, no_grace_logins_lines)
             
-    if users_without_grace_logins:
-        print
-        print
-        print "The Following Users could not be notified because they ran out of grace logins:"
-        for user in users_without_grace_logins:
-            print user_to_rule_line(user, user.rule)
 
-    if failed_users:
-        print
-        print
-        print "The Following Users could not be notified for unknown reason (read the logs):"
-        for user in failed_users:
-            print user_to_rule_line(user, user.rule)
-
-    if notified_users:
-        print
-        print
-        print "The Following Users were successfully notified:"
-        for user in notified_users:
-            print user_to_rule_line(user, user.rule)
+    
