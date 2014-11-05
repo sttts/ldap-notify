@@ -44,7 +44,7 @@ def main(argv):
 	dry = False
 	test = False
 	test_address = None
-	restrict_users = None
+	restrict_to_users = None
 
 	# parse arguments	
 	try:
@@ -72,7 +72,7 @@ def main(argv):
 		elif opt in ['-k']:
 			ignore_cert = True
 		elif opt in ['--restrict']:
-			restrict_users = arg.replace(' ','').split(';')
+			restrict_to_users = arg.replace(' ','').split(';')
 
 	if not config_file or args:
 		usage()
@@ -91,8 +91,7 @@ def main(argv):
 		config.test.dry = config.test.dry or dry
 		config.test.test = config.test.test or test
 		config.test.to_address = test_address or config.test.to_address
-		config.test.users = set(restrict_users or config.test.users)
-		config.test.restrict = restrict_users!=None or config.test.restrict
+		config.test.restrict_to_users = set(restrict_to_users or config.test.restrict_to_users)
 
 		# start the algorithm
 		con = edir_reminder_service.connection.connect_to_ldap(config)

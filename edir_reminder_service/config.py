@@ -43,7 +43,6 @@ dry = false
 test = false
 to_address = {root_mail!s}
 send_message = true
-restrict = false
 restrict_to_users =
 """.format(
     root_mail="root@" + HOSTNAME,
@@ -93,8 +92,7 @@ def load(filename = "login.conf"):
     c['test']['dry'] = config.getboolean("test", "dry")
     c['test']['to_address'] = config.get("test", "to_address").strip()
     c['test']['send_message'] = config.getboolean("test", "send_message")
-    c['test']['restrict'] = config.getboolean("test", "restrict")
-    c['test']['users'] = list(user for user_list in map(lambda s: s.split(' '), config.get("test", "users", "").split('\n')) for user in user_list)
+    c['test']['restrict_to_users'] = list(user for user_list in map(lambda s: s.split(' '), config.get("test", "restrict_to_users", "").split('\n')) for user in user_list)
     
     c['rules'] = []
     for section in config.sections():
