@@ -13,8 +13,33 @@ def search_users(config, con, fltr=""):
     users = con.search_s(config.base_context, ldap.SCOPE_SUBTREE, "(&(objectclass=pwmUser)%s)" % fltr, attr_list)
     return users
 
+def ldap_user_to_user(config, cn, ldap_user):
+    json_user = {
+        'cn': cn,
+        'mail': None,
+        config.notify_attribute: None,
+        config.expiry_attribute: None,
+        'fullName': None,
+        'rule': None
+    }
+    for attr in ldap_user:
+        if attr==config.notify_attribute:
+            to_attr = 'notify'
+        elif attr==config.expiry_attribute:
+            to_attr = 'expiry'
+        else:
+            to_attr = attr
+        json_user[to_attr] = ldap_user[attr][0]
+    return utils.obj(json_user)
+    
+
+def search_users_without_grace_logins(config, con):
+    users = search_users(config, con, "(&(loginGraceRemaining=0)(loginDisabled=false))")    
+    return list(ldap_user_to_user(config, cn, ldap_user) for cn, ldap_user in users)
+
+
 def users_for_rule(config, con, rule):
-    users = search_users(config, con, "(&(%s>=%s)(!(%s>=%s)))" % (config.expiry_attribute, rule.start, config.expiry_attribute, rule.end))    
+    users = search_users(config, con, "(&(%s>=%s)(!(%s>=%s))(!(loginGraceRemaining=0)))" % (config.expiry_attribute, rule.start, config.expiry_attribute, rule.end))    
     result = []
     for cn, ldap_user in users:
         # filter out those whose notify attribute shows a notification in less of the days of this rule
@@ -71,24 +96,7 @@ def users_for_rule(config, con, rule):
                 continue
 
         log.debug('Found %s with %s=%s to be notified with rule %i' % (cn, config.expiry_attribute, ldap_user[config.expiry_attribute][0], rule.days))
-        
-        # convert ldap user into Python user object
-        json_user = {
-            'cn': cn,
-            'mail': None,
-            config.notify_attribute: None,
-            config.expiry_attribute: None,
-            'fullName': None
-        }
-        for attr in ldap_user:
-            if attr==config.notify_attribute:
-                to_attr = 'notify'
-            elif attr==config.expiry_attribute:
-                to_attr = 'expiry'
-            else:
-                to_attr = attr
-            json_user[to_attr] = ldap_user[attr][0]
-        result.append(utils.obj(json_user))
+        result.append(ldap_user_to_user(config, cn, ldap_user))
 
     return result
 
@@ -101,16 +109,57 @@ def mark_user_notified(config, con, user, rule):
         con.modify_s(user.cn, [
             (ldap.MOD_REPLACE, config.notify_attribute, marker)
         ])
-        
-
-def process_rule_users(config, con, users, rule):
-    users_without_email = filter(lambda u: not u.mail, users)
-    users_with_email = filter(lambda u: u.mail, users)
     
+
+def notify_users(config, con, users, rule):
     mailer = mail.MailHandler(config)
-    for user in users_with_email:
+    failed = []
+    notified = []
+    for user in users:
         try:
             mailer.send_user_mail(rule, user)
             mark_user_notified(config, con, user, rule)
+            notified.append(user)
         except Exception:
             log.exception('Exception processing user %s' + user.cn)
+            failed.append(user)
+    return notified, failed
+
+
+def user_to_rule_line(user, rule):
+    return "cn=%s, %s%sExpiry Date: %s" % (
+        user.cn, 
+        (user.mail+', ') if user.mail else '', 
+        ("%i Days Rule, " % user.rule.days) if user.rule else '',
+        str(datetime.strptime(user.expiry, '%Y%m%d%H%M%SZ')))
+
+
+def notify_admin(config, con, notified_users, failed_users, users_without_email, users_without_grace_logins):
+    print "Betreff: Account Expiry Report"
+    if users_without_email:
+        print
+        print
+        print "The Following Users could not be notified because of missing E-Mail addresses:"
+        for user in users_without_email:
+            print user_to_rule_line(user, user.rule)
+            
+    if users_without_grace_logins:
+        print
+        print
+        print "The Following Users could not be notified because they ran out of grace logins:"
+        for user in users_without_grace_logins:
+            print user_to_rule_line(user, user.rule)
+
+    if failed_users:
+        print
+        print
+        print "The Following Users could not be notified for unknown reason (read the logs):"
+        for user in failed_users:
+            print user_to_rule_line(user, user.rule)
+
+    if notified_users:
+        print
+        print
+        print "The Following Users were successfully notified:"
+        for user in notified_users:
+            print user_to_rule_line(user, user.rule)

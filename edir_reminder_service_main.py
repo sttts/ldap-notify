@@ -91,9 +91,29 @@ def main(argv):
 			print repr(algorithm.search_users(config, con))
 		
 		# process the rules, starting with the smallest interval
+		users_without_email = []
+		failed_users = []
+		notified_users = []
 		for rule in config.rules:
 			rule_users = algorithm.users_for_rule(config, con, rule)
-			algorithm.process_rule_users(config, config, rule_users, rule)	
+			
+			# assign rule
+			for user in rule_users:
+				setattr(user, 'rule', rule)
+			
+			# notify those which have an email
+			successful, failed = algorithm.notify_users(config, con, filter(lambda u: u.mail, rule_users), rule)
+			notified_users.extend(successful)
+			failed_users.extend(failed)
+			
+			# collect all others for the admin
+			users_without_email.extend(filter(lambda u: not u.mail, rule_users))
+
+		# find users without graceLogins
+		users_without_grace_logins = algorithm.search_users_without_grace_logins(config, con)
+
+		# send admin email
+		algorithm.notify_admin(config, con, notified_users, failed_users, users_without_email, users_without_grace_logins)
 
 	except ConfigParser.NoOptionError, e:
 		print >> sys.stderr, "Configuration error: %s" % str(e)
