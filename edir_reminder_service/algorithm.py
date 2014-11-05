@@ -102,11 +102,11 @@ def users_for_rule(config, con, rule):
     return result
 
 
-def mark_user_notified(config, con, user, rule):
+def mark_user_notified(config, con, user, rule, restricted):
     marker = g.NOW.strftime(g.LDAP_TIME_FORMAT) + ':' + str(rule.days)
-    log.info('%sMarking user %s notified with %s' % ('DRY: ' if config.test.dry else 'TEST:' if config.test.test else '', 
+    log.info('%sMarking user %s notified with %s' % ('RESTRICTED: ' if restricted else 'DRY: ' if config.test.dry else '', 
                                                     user.cn, marker))
-    if not config.test.dry:
+    if not restricted and not config.test.dry and not config.test.test:
         con.modify_s(user.cn, [
             (ldap.MOD_REPLACE, config.notify_attribute, marker)
         ])
@@ -118,8 +118,9 @@ def notify_users(config, con, users, rule):
     notified = []
     for user in users:
         try:
-            mailer.send_user_mail(rule, user)
-            mark_user_notified(config, con, user, rule)
+            restricted = config.test.restrict and not (user.cn in config.test.users or user.dn in config.test.users)
+            mailer.send_user_mail(rule, user, restricted)
+            mark_user_notified(config, con, user, rule, restricted)
             notified.append(user)
         except Exception:
             log.exception('Exception processing user %s' + user.cn)
@@ -128,7 +129,7 @@ def notify_users(config, con, users, rule):
 
 
 def user_to_rule_line(user, rule):
-    return "cn=%s, %s%sExpiry Date: %s" % (
+    return "%s, %s%sExpiry Date: %s" % (
         user.dn, 
         (user.mail+', ') if user.mail else '', 
         ("%i Days Rule, " % user.rule.days) if user.rule else '',

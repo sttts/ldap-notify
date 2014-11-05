@@ -26,11 +26,12 @@ Parameters:'
   -h, --help                  show this help
   -c, --conf                  mandatory parameter: the config file name
   -k                          ignore SSL/TLS certificates
+  --dry                       do not send emails or modify anything in ldap
+  --test <test-address>       send all mails to the given address
+  --restrict <DN>;<CN>;...    semicolon seperated DNs and CNs to restrict sent emails to
+  --time <timestamp>          simulate current UTC time (format: 20141031162633Z)
   -v, --verbose               verbose logging
   -d, --debug                 debug logging
-  --test <test-address>       send all mails to the given address
-  --dry                       do not send emails or modify anything in ldap
-  --time <timestamp>      simulate current UTC time (format: 20141031162633Z)
 """
 
 def main(argv):
@@ -43,10 +44,11 @@ def main(argv):
 	dry = False
 	test = False
 	test_address = None
+	restrict_users = None
 
 	# parse arguments	
 	try:
-		opts, args = getopt.getopt(argv, "hc:dvk", ["help", "config=", "time=", "test=", 'dry', "debug", "verbose"])
+		opts, args = getopt.getopt(argv, "hc:dvk", ["help", "config=", "time=", "test=", 'dry', "debug", "verbose", "restrict="])
 	except getopt.GetoptError:
 		usage()
 		sys.exit(2)
@@ -69,6 +71,8 @@ def main(argv):
 			g.NOW = datetime.strptime(arg, g.LDAP_TIME_FORMAT)
 		elif opt in ['-k']:
 			ignore_cert = True
+		elif opt in ['--restrict']:
+			restrict_users = arg.replace(' ','').split(';')
 
 	if not config_file or args:
 		usage()
@@ -87,6 +91,8 @@ def main(argv):
 		config.test.dry = config.test.dry or dry
 		config.test.test = config.test.test or test
 		config.test.to_address = test_address or config.test.to_address
+		config.test.users = set(restrict_users or config.test.users)
+		config.test.restrict = restrict_users!=None or config.test.restrict
 
 		# start the algorithm
 		con = edir_reminder_service.connection.connect_to_ldap(config)

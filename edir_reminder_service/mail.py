@@ -62,7 +62,7 @@ class MailHandler(object):
 		
 		return self.templates[filename]
 
-	def send_user_mail(self, rule, user):
+	def send_user_mail(self, rule, user, restricted=False):
 		expiry_time = datetime.strptime(user.expiry, '%Y%m%d%H%M%SZ')
 		template_env = {
 			'expiry_date': expiry_time.date().strftime(locale.nl_langinfo(locale.D_FMT)),
@@ -96,13 +96,12 @@ class MailHandler(object):
 			
 		# setting mail headers
 		msg['Subject'] = Template(rule.subject).substitute(template_env)
-		msg['From'] = (rule.from_text + '<' + rule.from_address +'>') if rule.from_text else rule.from_address
+		msg['From'] = (rule.from_text + ' <' + rule.from_address +'>') if rule.from_text else rule.from_address
 		msg['To'] = to
 		
 		# send message
-		log.info('%sSending mail for %s to %s: %s' % ('DRY: ' if self.config.test.dry else 'TEST:' if self.config.test.test else '',
-													  user.cn, to, msg['Subject']))
-		if not self.config.test.dry:
+		log.info('%sSending mail for %s to %s: %s' % ('RESTRICTED: ' if restricted else 'DRY: ' if self.config.test.dry else '', user.cn, to, msg['Subject']))
+		if not restricted and not self.config.test.dry:
 			try:
 				smtp_con = self.smtp_connection()
 				raise Exception('tried to send') #self.s.sendmail(rule.from_address, to, msg.as_string())
@@ -144,8 +143,7 @@ To: %s
 )
 
 		# send message
-		log.info('%sSending admin report to %s: %s' % ('DRY: ' if self.config.test.dry else 'TEST:' if self.config.test.test else '',
-													  to, subject))
+		log.info('%sSending admin report to %s: %s' % ('DRY: ' if self.config.test.dry else '', to, subject))
 		if self.config.test.dry:
 			print str(header+msg)
 		else:
