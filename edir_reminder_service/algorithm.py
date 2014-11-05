@@ -15,7 +15,8 @@ def search_users(config, con, fltr=""):
 
 def ldap_user_to_user(config, cn, ldap_user):
     json_user = {
-        'cn': cn,
+        'dn': cn,
+        'cn': None,
         'mail': None,
         config.notify_attribute: None,
         config.expiry_attribute: None,
@@ -128,7 +129,7 @@ def notify_users(config, con, users, rule):
 
 def user_to_rule_line(user, rule):
     return "cn=%s, %s%sExpiry Date: %s" % (
-        user.cn, 
+        user.dn, 
         (user.mail+', ') if user.mail else '', 
         ("%i Days Rule, " % user.rule.days) if user.rule else '',
         str(datetime.strptime(user.expiry, '%Y%m%d%H%M%SZ')))
