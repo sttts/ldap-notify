@@ -1,9 +1,11 @@
 from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+import locale
 import logging
 log = logging.getLogger('edir_reminder_service.mail')
 from smtplib import SMTP, SMTP_SSL, SMTPException
+from string import Template
 
 import edir_reminder_service.globals as g
 from edir_reminder_service import ConfigError
@@ -11,11 +13,12 @@ from edir_reminder_service import ConfigError
 class MailHandler(object):
 	def __init__(self, config):
 		self.config = config
-		self.s = None
+		self.con = None
+		self.templates = {}
 		
 	def smtp_connection(self):
-		if self.s:
-			return self.s
+		if self.con:
+			return self.con
 		
 		if not self.config.smtp.server:
 			raise ConfigError('No SMTP server defined')
@@ -36,18 +39,36 @@ class MailHandler(object):
 				log.debug("Authenticating with SMTP server")
 				s.login(self.config.smtp.user, self.config.smtp.password)
 			log.debug("SMTP connection established")
-			self.s = s
+			self.con = s
 		except SMTPException:
 			raise
 
 	def __del__(self):
-		if self.s:
+		if self.con:
 			log.info("Closing Connection to SMTP Server")
-			self.s.quit()
+			self.con.quit()
+			
+	def template(self, filename):
+		if filename in self.templates:
+			return self.templates[filename]
+		
+		f = open(filename, 'r')
+		self.templates[filename] = Template(f.read())
+		f.close()
+		
+		return self.templates[filename]
 
 	def send_user_mail(self, rule, user, alternative_to=None):
 		expiry_time = datetime.strptime(user.expiry, '%Y%m%d%H%M%SZ')
-		days_left = (expiry_time - g.NOW).days
+		template_env = {
+			'expiry_date': expiry_time.date().strftime(locale.nl_langinfo(locale.D_FMT)),
+			'days_left': str((expiry_time - g.NOW).days),
+			'weeks_left': str((expiry_time - g.NOW).days / 7),
+			'months_left': str((expiry_time - g.NOW).days / 30),
+			'rule_days': str(rule.days),
+			'cn': user.cn,
+			'fullname': user.fullName if user.fullName else "Unknown User"
+		}
 		
 		# send where?
 		if not self.config.test.test:
@@ -57,9 +78,9 @@ class MailHandler(object):
 		
 		# send what?
 		if rule.html_template:
-			html_msg = MIMEText(rule.html_template, 'html', 'utf-8')
+			html_msg = MIMEText(self.template(rule.html_template).substitute(template_env), 'html', 'utf-8')
 		if rule.text_template:
-			text_msg = MIMEText(rule.text_template, 'plain', 'utf-8')
+			text_msg = MIMEText(self.template(rule.text_template).substitute(template_env), 'plain', 'utf-8')
 		
 		if rule.html_template and rule.text_template:
 			msg = MIMEMultipart('alternative')
@@ -73,7 +94,7 @@ class MailHandler(object):
 			raise ConfigError('Neither text_template nor html_template is defined for rule ' + str(rule.days))
 			
 		# setting mail headers
-		msg['Subject'] = rule.subject
+		msg['Subject'] = Template(rule.subject).substitute(template_env)
 		msg['From'] = (rule.from_text + '<' + rule.from_address +'>') if rule.from_text else rule.from_address
 		msg['To'] = to
 		

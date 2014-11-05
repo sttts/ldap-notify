@@ -24,6 +24,13 @@ notify_attribute = pwmNotify
 mail_server_address = localhost
 log_file_path = /dev/stdout
 
+[smtp]
+server =
+ssl = false
+starttls = false
+user =
+password =
+
 [admin]
 from_address = {root_mail!s}
 to_address = {admin_mail!s}
@@ -32,11 +39,12 @@ subject = Login will expire soon
 filename = {admin_filename!s}
 
 [test]
-test_mode = false
+dry = false
+test = false
 to_address = {root_mail!s}
 send_message = true
 restrict = false
-users =
+restrict_to_users =
 """.format(
     root_mail="root@" + HOSTNAME,
     admin_mail="admin@" + HOSTNAME,
@@ -64,8 +72,14 @@ def load(filename = "login.conf"):
     c['base_context'] = config.get("common", "base_context").strip()
     c['expiry_attribute'] = config.get("common", "expiry_attribute").strip()
     c['notify_attribute'] = config.get("common", "notify_attribute").strip()
-    c['mail_server_address'] = config.get("common", "mail_server_address").strip()
     c['log_file_path'] = config.get("common", "log_file_path").strip()
+    
+    c['smtp'] = {}
+    c['smtp']['server'] = config.get("smtp", "server").strip()
+    c['smtp']['ssl'] = config.getboolean("smtp", "ssl")
+    c['smtp']['starttls'] = config.getboolean("smtp", "starttls")
+    c['smtp']['user'] = config.get("smtp", "user").strip()
+    c['smtp']['password'] = config.get("smtp", "password").strip()
     
     c['admin'] = {}
     c['admin']['from_address'] = config.get("admin", "from_address").strip()
@@ -75,11 +89,12 @@ def load(filename = "login.conf"):
     c['admin']['filename'] = config.get("admin", "filename").strip()
     
     c['test'] = {}
-    c['test']['test_mode'] = config.getboolean("test", "test_mode")
+    c['test']['test'] = config.getboolean("test", "test")
+    c['test']['dry'] = config.getboolean("test", "dry")
     c['test']['to_address'] = config.get("test", "to_address").strip()
     c['test']['send_message'] = config.getboolean("test", "send_message")
     c['test']['restrict'] = config.getboolean("test", "restrict")
-    c['test']['users'] = list(user for user_list in map(lambda s: s.split(' '), config.get("test", "users", "").split('\n')) for user in user_list)
+    c['test']['restrict_to_users'] = list(user for user_list in map(lambda s: s.split(' '), config.get("test", "restrict_to_users", "").split('\n')) for user in user_list)
     
     c['rules'] = []
     for section in config.sections():
@@ -93,7 +108,8 @@ def load(filename = "login.conf"):
             "from_address": config.get(section, "from_address", "root@" + HOSTNAME).strip() if config.has_option(section, "from_address") else "root@" + HOSTNAME,
             "from_text": config.get(section, "from_text").strip() if config.has_option(section, "from_text") else SERVICE_NAME,
             "subject": config.get(section, "subject").strip() if config.has_option(section, "subject") else "Login will expire soon",
-            "filename": config.get(section, "filename").strip() if config.has_option(section, "filename") else os.path.dirname(__file__) + "/templates/notify.tmpl"
+            "text_template": config.get(section, "text_template").strip() if config.has_option(section, "text_template") else os.path.dirname(__file__) + "/templates/notify.tmpl.txt",
+            "html_template": config.get(section, "html_template").strip() if config.has_option(section, "html_template") else None
         })
 
     c['rules'] = sorted(c['rules'], key=lambda r: r['days'])

@@ -5,10 +5,13 @@ import logging as log
 import getopt
 import ConfigParser
 import ldap
+import locale
 from datetime import datetime
+from smtplib import SMTPException
 
 import edir_reminder_service.config
 import edir_reminder_service.connection
+from edir_reminder_service import ConfigError
 
 # add virtualenv path to PYTHON_PATH, so libs are found
 virtualenv_path = os.path.dirname(__file__) + '/env'
@@ -23,7 +26,7 @@ Parameters:'
   -h, --help                  show this help
   -c, --conf                  mandatory parameter: the config file name
   -k                          ignore SSL/TLS certificates
-  --dry                       do not send emails, only log what would be done without --dry
+  --test                      do not send emails, only log what would be done without --test
   -v, --verbose               verbose logging
   -d, --debug                 debug logging
   -t, --time                  simulate current UTC time (format: 20141031162633Z)
@@ -31,14 +34,17 @@ Parameters:'
 
 def main(argv):
 	import edir_reminder_service.globals as g
+	locale.setlocale(locale.LC_ALL, "")
 
 	# default values
 	ignore_cert = False
 	config_file = None
+	dry = False
+	test = False
 
 	# parse arguments	
 	try:
-		opts, args = getopt.getopt(argv, "hc:t:dvkt", ["help", "config=", "time=", "dry", "debug", "verbose"])
+		opts, args = getopt.getopt(argv, "hc:t:dvkt", ["help", "config=", "time=", "test", 'dry', "debug", "verbose"])
 	except getopt.GetoptError:
 		usage()
 		sys.exit(2)
@@ -46,8 +52,10 @@ def main(argv):
 		if opt in ('-h', '--help'):
 			usage()
 			sys.exit()
-		elif opt in ('--dry', ):
-			g.DRY_RUN = True
+		elif opt in ('--test',):
+			test = True
+		elif opt in ('--dry',):
+			dry = True
 		elif opt in ('-d', '--debug'):
 			g.DEBUG += 1
 		elif opt in ('-v', '--verbose'):
@@ -71,26 +79,36 @@ def main(argv):
 		# load configuration
 		config = edir_reminder_service.config.load(filename=config_file)
 		
-		# overwrite values from command line
+		# merge config with values from command line
 		config.ignore_cert = config.ignore_cert or ignore_cert
+		config.test.dry = config.test.dry or dry
+		config.test.test = config.test.test or test
 
 		# start the algorithm
 		con = edir_reminder_service.connection.connect_to_ldap(config)
 		import edir_reminder_service.algorithm as algorithm
 		if g.DEBUG > 5:
 			print repr(algorithm.search_users(config, con))
+		
+		# process the rules, starting with the smallest interval
 		for rule in config.rules:
-			users, skipped = algorithm.users_for_rule(config, con, rule)
-			for user in users:
-				algorithm.mark_user_notified(config, con, user, rule)
+			rule_users = algorithm.users_for_rule(config, con, rule)
+			algorithm.process_rule_users(config, config, rule_users, rule)	
 
 	except ConfigParser.NoOptionError, e:
+		print >> sys.stderr, "Configuration error: %s" % str(e)
+		sys.exit(2)
+	except ConfigError, e:
 		print >> sys.stderr, "Configuration error: %s" % str(e)
 		sys.exit(2)
 	except ldap.LDAPError, e:
 		msg = e.args[0]['desc'] if 'desc' in e.args[0] else str(e)
 		print >> sys.stderr, "LDAP error: %s" % msg
 		sys.exit(2)
+	except SMTPException, e:
+		print >> sys.stderr, "SMTP error: %s" % str(e)
+		sys.exit(2)
+		
 	#except Exception, e:
 	#	print >> sys.stderr, "Error: %s" % str(e)
 	#	sys.exit(2)
