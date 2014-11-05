@@ -130,8 +130,7 @@ class MailHandler(object):
 		
 		# setting mail headers
 		subject = Template(config.admin.subject).substitute(template_env)
-		header = """
-Content-Type: text/plain; charset="utf-8"
+		header = """Content-Type: text/plain; charset="utf-8"
 Subject: %s
 From: %s
 To: %s
@@ -145,6 +144,7 @@ To: %s
 		# send message
 		log.info('%sSending admin report to %s: %s' % ('DRY: ' if self.config.test.dry else '', to, subject))
 		if self.config.test.dry:
+			print
 			print str(header+msg)
 		else:
 			try:
