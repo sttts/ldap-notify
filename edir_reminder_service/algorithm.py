@@ -19,16 +19,37 @@ def users_for_rule(config, con, rule):
 		# filter out those whose notify attribute shows a notification in less of the days of this rule
 		if config.notify_attribute in ldap_user:
 			try:
-				ts, last_rule = ldap_user[config.notify_attribute][0].split(':')
-				ts = datetime.strptime(ts, g.LDAP_TIME_FORMAT)
-				expiry = datetime.strptime(ldap_user[config.expiry_attribute][0])
-				delta = expiry - ts
-				if delta < timedelta(days=rule.days):
-					log.info("Skipping %s because reminder %s was sent before: %s" % (cn, last_rule, ldap_user[config.notify_attribute]))
+				# disabled users are skipped
+				if 'loginDisabled' in ldap_user and ldap_user['loginDisabled'][0]:
+					log.debug("Skipping %s because it's disabled" % cn)
 					skipped_users.append( (cn, ldap_user) )
 					continue
+
+				# check old notify attribute
+				if config.notify_attribute in ldap_user:
+					notify_attribute_value = ldap_user[config.notify_attribute][0]
+					parts = notify_attribute_value.split(':')
+					if len(parts) != 2:
+						log.warn("%sDeleting invalid attribute of %s: '%s: %s'" % ('DRY: ' if g.DRY_RUN else '', cn, config.notify_attribute, notify_attribute_value))
+						if not g.DRY_RUN:
+							con.modify_s(cn, [
+								(ldap.MOD_DELETE, config.notify_attribute)
+							])
+					else:
+						ts, last_rule = parts 
+						ts = datetime.strptime(ts, g.LDAP_TIME_FORMAT)
+						expiry = datetime.strptime(ldap_user[config.expiry_attribute][0], g.LDAP_TIME_FORMAT)
+						delta = expiry - ts
+						if delta < timedelta(days=rule.days):
+							log.debug("Skipping %s because reminder %s was sent before: %s" % (cn, last_rule, ldap_user[config.notify_attribute]))
+							skipped_users.append( (cn, ldap_user) )
+							continue
+					
+				# users without email will notify the admin later
+				if 'mail' not in ldap_user:
+					log.info("User %s has no email" % cn)
 			except ValueError, e:
-				log.warn('Skipping %s because: %s' % (cn, str(e)))
+				log.exception('Skipping %s because: %s' % (cn, str(e)))
 				continue
 			except Exception, e:
 				log.exception(e)
