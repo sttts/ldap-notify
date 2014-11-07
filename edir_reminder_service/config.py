@@ -3,8 +3,8 @@ import socket
 from StringIO import StringIO
 import logging
 log = logging.getLogger('edir-reminder-server')
-from edir_reminder_service import ConfigError
 
+from edir_reminder_service import ConfigError
 import edir_reminder_service.utils as utils
 import edir_reminder_service.globals as g
 
@@ -12,13 +12,13 @@ SERVICE_NAME = "eDir Login/Password Email Reminder Service"
 HOSTNAME = socket.gethostname()
 
 # set defaults
-default_cfg = StringIO("""\
+default_cfg = """\
 [common]
 server = ldap://localhost
 bind_dn =
 bind_password =
 bind_password_base64 =
-start_tls = false
+starttls = false
 ignore_cert = false
 base_context = 
 expiry_attribute = passwordExpirationTime
@@ -52,13 +52,20 @@ restrict_to_users =
     admin_mail="admin@" + HOSTNAME,
     service_name=SERVICE_NAME,
     text_template=os.path.dirname(__file__) + "/templates/admin.tmpl.txt"
-))
+)
+
+def flatten(l):
+    return list(x for sublist in l for x in sublist)
+
+def restrict_user_list_parse(s):
+    lst = s.replace(';', '\n').replace(' ', '\n').split('\n')
+    return set(filter(None, lst))
 
 # load config file
-def load(filename = "login.conf"):
+def load(filename = None):
     import ConfigParser
     config = ConfigParser.SafeConfigParser()
-    config.readfp(default_cfg)
+    config.readfp(StringIO(default_cfg))
     
     if filename:
         log.info('Reading config file %s' % filename)
@@ -66,38 +73,38 @@ def load(filename = "login.conf"):
     
     c = {}
     
-    c['server'] = config.get("common", "server").strip()
-    c['bind_dn'] = config.get("common", "bind_dn").strip()
-    c['bind_password'] = config.get("common", "bind_password").strip()
-    c['bind_password_base64'] = config.get("common", "bind_password_base64").strip()
-    c['start_tls'] = config.getboolean("common", "start_tls")
+    c['server'] = config.get("common", "server").strip() or None
+    c['bind_dn'] = config.get("common", "bind_dn").strip() or None
+    c['bind_password'] = config.get("common", "bind_password").strip() or None
+    c['bind_password_base64'] = config.get("common", "bind_password_base64").strip() or None
+    c['starttls'] = config.getboolean("common", "starttls")
     c['ignore_cert'] = config.getboolean("common", "ignore_cert")
-    c['base_context'] = config.get("common", "base_context").strip()
-    c['expiry_attribute'] = config.get("common", "expiry_attribute").strip()
-    c['notify_attribute'] = config.get("common", "notify_attribute").strip()
-    c['log_file_path'] = config.get("common", "log_file_path").strip()
+    c['base_context'] = config.get("common", "base_context").strip() or None
+    c['expiry_attribute'] = config.get("common", "expiry_attribute").strip() or None
+    c['notify_attribute'] = config.get("common", "notify_attribute").strip() or None
+    c['log_file_path'] = config.get("common", "log_file_path").strip() or None
     
     c['smtp'] = {}
-    c['smtp']['server'] = config.get("smtp", "server").strip()
+    c['smtp']['server'] = config.get("smtp", "server").strip() or None
     c['smtp']['ssl'] = config.getboolean("smtp", "ssl")
     c['smtp']['starttls'] = config.getboolean("smtp", "starttls")
-    c['smtp']['user'] = config.get("smtp", "user").strip()
-    c['smtp']['password'] = config.get("smtp", "password").strip()
-    c['smtp']['password_base64'] = config.get("smtp", "password_base64").strip()
+    c['smtp']['user'] = config.get("smtp", "user").strip() or None
+    c['smtp']['password'] = config.get("smtp", "password").strip() or None
+    c['smtp']['password_base64'] = config.get("smtp", "password_base64").strip() or None
     
     c['admin'] = {}
-    c['admin']['from_address'] = config.get("admin", "from_address").strip()
-    c['admin']['to_address'] = config.get("admin", "to_address").strip()
-    c['admin']['from_text'] = config.get("admin", "from_text").strip()
-    c['admin']['subject'] = config.get("admin", "subject").strip()
-    c['admin']['text_template'] = config.get("admin", "text_template").strip()
+    c['admin']['from_address'] = config.get("admin", "from_address").strip() or None
+    c['admin']['to_address'] = config.get("admin", "to_address").strip() or None
+    c['admin']['from_text'] = config.get("admin", "from_text").strip() or None
+    c['admin']['subject'] = config.get("admin", "subject").strip() or None
+    c['admin']['text_template'] = config.get("admin", "text_template").strip() or None
     
     c['test'] = {}
     c['test']['test'] = config.getboolean("test", "test")
     c['test']['dry'] = config.getboolean("test", "dry")
-    c['test']['to_address'] = config.get("test", "to_address").strip()
+    c['test']['to_address'] = config.get("test", "to_address").strip() or None
     c['test']['send_message'] = config.getboolean("test", "send_message")
-    c['test']['restrict_to_users'] = list(user for user_list in map(lambda s: s.split(' '), config.get("test", "restrict_to_users", "").split('\n')) for user in user_list)
+    c['test']['restrict_to_users'] = restrict_user_list_parse(config.get("test", "restrict_to_users", "").strip())
     
     c['rules'] = []
     for section in config.sections():

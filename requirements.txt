@@ -1,1 +1,7 @@
 python-ldap==2.4.18
+
+# for tests
+dataflake.fakeldap==1.1
+nose==1.3.4
+rednose==0.4.1
+mock==1.0.1

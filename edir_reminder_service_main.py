@@ -12,15 +12,20 @@ from smtplib import SMTPException
 import edir_reminder_service.config
 import edir_reminder_service.connection
 from edir_reminder_service import ConfigError
+import edir_reminder_service.globals as g
 
 # add virtualenv path to PYTHON_PATH, so libs are found
 virtualenv_path = os.path.dirname(__file__) + '/env'
 if virtualenv_path not in sys.path:
 	sys.path.insert(0, virtualenv_path)
 
+class SysExitException(Exception):
+	def __init__(self, rc):
+		super(SysExitException, self).__init__('sys.exit(%i)' % rc)
+		self.rc = rc
+
 def usage(): 
-	print """
-Usage: edit-reminder-server [OPTION]... -c <config_file.conf>
+	print """Usage: edir-reminder-service [OPTION]... -c <config_file.conf>
 
 Parameters:'
   -h, --help                  show this help
@@ -34,55 +39,94 @@ Parameters:'
   -d, --debug                 debug logging
 """
 
-def main(argv):
-	import edir_reminder_service.globals as g
-	locale.setlocale(locale.LC_ALL, "")
-
-	# default values
-	ignore_cert = False
-	config_file = None
-	dry = False
-	test = False
-	test_address = None
-	restrict_to_users = None
-
-	# parse arguments	
-	try:
-		opts, args = getopt.getopt(argv, "hc:dvk", ["help", "config=", "time=", "test=", 'dry', "debug", "verbose", "restrict="])
-	except getopt.GetoptError:
-		usage()
-		sys.exit(2)
-	for opt, arg in opts:
-		if opt in ['-h', '--help']:
-			usage()
-			sys.exit()
-		elif opt in ['--test']:
-			test = True
-			test_address = arg
-		elif opt in ['--dry']:
-			dry = True
-		elif opt in ['-d', '--debug']:
-			g.DEBUG += 1
-		elif opt in ['-v', '--verbose']:
-			g.VERBOSE = True
-		elif opt in ['-c', '--conf']:
-			config_file = arg
-		elif opt in ['--time']:
-			g.NOW = datetime.strptime(arg, g.LDAP_TIME_FORMAT)
-		elif opt in ['-k']:
-			ignore_cert = True
-		elif opt in ['--restrict']:
-			restrict_to_users = arg.replace(' ','').split(';')
-
-	if not config_file or args:
-		usage()
-		sys.exit(2)
+def run(config):
+	# start the algorithm
+	con = edir_reminder_service.connection.connect_to_ldap(config)
+	import edir_reminder_service.algorithm as algorithm
+	if g.DEBUG > 5:
+		print repr(algorithm.search_users(config, con))
+	
+	# process the rules, starting with the smallest interval
+	users_without_email = []
+	failed_users = []
+	notified_users = []
+	for rule in config.rules:
+		rule_users = algorithm.users_for_rule(config, con, rule)
 		
-	# setup logging
-	log.basicConfig(level=log.DEBUG if g.DEBUG else log.INFO if g.VERBOSE else log.WARN,
-				format='%(asctime)s %(levelname)s: %(message)s')
+		# assign rule
+		for user in rule_users:
+			setattr(user, 'rule', rule)
+		
+		# notify those which have an email
+		successful, failed = algorithm.notify_users(config, con, filter(lambda u: u.mail, rule_users), rule)
+		notified_users.extend(successful)
+		failed_users.extend(failed)
+		
+		# collect all others for the admin
+		users_without_email.extend(filter(lambda u: not u.mail, rule_users))
 
+	# find users without graceLogins
+	users_without_grace_logins = algorithm.search_users_without_grace_logins(config, con)
+
+	# send admin email
+	algorithm.notify_admin(config, con, notified_users, failed_users, users_without_email, users_without_grace_logins)
+
+def main(argv):
 	try:
+		locale.setlocale(locale.LC_ALL, "")
+	
+		# default values
+		ignore_cert = False
+		config_file = None
+		debug = 0
+		verbose = False
+		now = datetime.utcnow()
+		dry = False
+		test = False
+		test_address = None
+		restrict_to_users = None
+	
+		# parse arguments	
+		try:
+			opts, args = getopt.getopt(argv, "hc:dvk", ["help", "config=", "time=", "test=", 'dry', "debug", "verbose", "restrict="])
+		except getopt.GetoptError:
+			usage()
+			raise SysExitException(2)
+		for opt, arg in opts:
+			if opt in ['-h', '--help']:
+				usage()
+				raise SysExitException(0)
+			elif opt in ['--test']:
+				test = True
+				test_address = arg
+			elif opt in ['--dry']:
+				dry = True
+			elif opt in ['-d', '--debug']:
+				debug += 1
+			elif opt in ['-v', '--verbose']:
+				verbose = True
+			elif opt in ['-c', '--conf']:
+				config_file = arg
+			elif opt in ['--time']:
+				now = datetime.strptime(arg, g.LDAP_TIME_FORMAT)
+			elif opt in ['-k']:
+				ignore_cert = True
+			elif opt in ['--restrict']:
+				restrict_to_users = edir_reminder_service.config.restrict_user_list_parse(arg)
+	
+		if not config_file or args:
+			usage()
+			raise SysExitException(2)
+			
+		# set globals
+		g.DEBUG = debug
+		g.VERBOSE = verbose
+		g.NOW = now
+
+		# setup logging
+		log.basicConfig(level=log.DEBUG if g.DEBUG else log.INFO if g.VERBOSE else log.WARN,
+					format='%(asctime)s %(levelname)s: %(message)s')
+
 		# load configuration
 		config = edir_reminder_service.config.load(filename=config_file)
 		
@@ -91,59 +135,36 @@ def main(argv):
 		config.test.dry = config.test.dry or dry
 		config.test.test = config.test.test or test
 		config.test.to_address = test_address or config.test.to_address
-		config.test.restrict_to_users = set(restrict_to_users or config.test.restrict_to_users)
+		config.test.restrict_to_users = restrict_to_users or config.test.restrict_to_users
 
-		# start the algorithm
-		con = edir_reminder_service.connection.connect_to_ldap(config)
-		import edir_reminder_service.algorithm as algorithm
-		if g.DEBUG > 5:
-			print repr(algorithm.search_users(config, con))
-		
-		# process the rules, starting with the smallest interval
-		users_without_email = []
-		failed_users = []
-		notified_users = []
-		for rule in config.rules:
-			rule_users = algorithm.users_for_rule(config, con, rule)
-			
-			# assign rule
-			for user in rule_users:
-				setattr(user, 'rule', rule)
-			
-			# notify those which have an email
-			successful, failed = algorithm.notify_users(config, con, filter(lambda u: u.mail, rule_users), rule)
-			notified_users.extend(successful)
-			failed_users.extend(failed)
-			
-			# collect all others for the admin
-			users_without_email.extend(filter(lambda u: not u.mail, rule_users))
-
-		# find users without graceLogins
-		users_without_grace_logins = algorithm.search_users_without_grace_logins(config, con)
-
-		# send admin email
-		algorithm.notify_admin(config, con, notified_users, failed_users, users_without_email, users_without_grace_logins)
+		# the actual code doing stuff
+		run(config)
 
 	except ConfigParser.NoOptionError, e:
 		print >> sys.stderr, "Configuration error: %s" % str(e)
-		sys.exit(2)
+		raise SysExitException(2)
 	except ConfigError, e:
 		print >> sys.stderr, "Configuration error: %s" % str(e)
-		sys.exit(2)
+		raise SysExitException(2)
 	except ldap.LDAPError, e:
 		msg = e.args[0]['desc'] if 'desc' in e.args[0] else str(e)
 		print >> sys.stderr, "LDAP error: %s" % msg
-		sys.exit(2)
+		raise SysExitException(1)
 	except SMTPException, e:
 		print >> sys.stderr, "SMTP error: %s" % str(e)
-		sys.exit(2)
+		raise SysExitException(1)
 		
 	#except Exception, e:
 	#	print >> sys.stderr, "Error: %s" % str(e)
 	#	sys.exit(2)
 	except KeyboardInterrupt:
-		sys.exit(253)
+		raise SysExitException(253)
+	except SysExitException, e:
+		return e.rc
+	else:
+		return 0
 
 # run app in standalone mode
 if __name__ == "__main__":
-	main(sys.argv[1:])
+	rc = main(sys.argv[1:])
+	sys.exit(rc)
