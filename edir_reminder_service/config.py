@@ -3,6 +3,7 @@ import socket
 from StringIO import StringIO
 import logging
 log = logging.getLogger('edir-reminder-server')
+from edir_reminder_service import ConfigError
 
 import edir_reminder_service.utils as utils
 import edir_reminder_service.globals as g
@@ -16,6 +17,7 @@ default_cfg = StringIO("""\
 server = ldap://localhost
 bind_dn =
 bind_password =
+bind_password_base64 =
 start_tls = false
 ignore_cert = false
 base_context = 
@@ -30,6 +32,7 @@ ssl = false
 starttls = false
 user =
 password =
+password_base64 =
 
 [admin]
 from_address = {root_mail!s}
@@ -66,6 +69,7 @@ def load(filename = "login.conf"):
     c['server'] = config.get("common", "server").strip()
     c['bind_dn'] = config.get("common", "bind_dn").strip()
     c['bind_password'] = config.get("common", "bind_password").strip()
+    c['bind_password_base64'] = config.get("common", "bind_password_base64").strip()
     c['start_tls'] = config.getboolean("common", "start_tls")
     c['ignore_cert'] = config.getboolean("common", "ignore_cert")
     c['base_context'] = config.get("common", "base_context").strip()
@@ -79,6 +83,7 @@ def load(filename = "login.conf"):
     c['smtp']['starttls'] = config.getboolean("smtp", "starttls")
     c['smtp']['user'] = config.get("smtp", "user").strip()
     c['smtp']['password'] = config.get("smtp", "password").strip()
+    c['smtp']['password_base64'] = config.get("smtp", "password_base64").strip()
     
     c['admin'] = {}
     c['admin']['from_address'] = config.get("admin", "from_address").strip()
@@ -111,6 +116,18 @@ def load(filename = "login.conf"):
         })
 
     c['rules'] = sorted(c['rules'], key=lambda r: r['days'])
+    
+    # decode base64 passwords, if set
+    import base64
+    if c['bind_password'] and c['bind_password_base64']:
+        raise ConfigError('Cannot set bind_password and bind_password_base64')
+    if not c['bind_password'] and c['bind_password_base64']:
+        c['bind_password'] = base64.b64decode(c['bind_password_base64'])
+
+    if c['smtp']['password'] and c['smtp']['password_base64']:
+        raise ConfigError('Cannot set SMTP password and password_base64')
+    if not c['smtp']['password'] and c['smtp']['password_base64']:
+        c['smtp']['password'] = base64.b64decode(c['smtp']['password_base64'])
     
     # compute time interval [start:end[ of each rule
     from datetime import timedelta
