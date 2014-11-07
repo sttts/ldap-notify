@@ -7,6 +7,10 @@ import edir_reminder_service.config
 from edir_reminder_service_main import main
 import edir_reminder_service.globals as g
 
+import ldap
+def error_connect_to_ldap(config):
+    raise ldap.LDAPError('Mock LDAP Error')
+
 class TestMain(unittest.TestCase):
     
     @patch('sys.stdout', new_callable=StringIO)
@@ -106,6 +110,15 @@ class TestMain(unittest.TestCase):
         
         config = mock_run.call_args[0][0]
         self.assertTrue(config.ignore_cert)
+        
+    @patch('sys.stdout', new_callable=StringIO)
+    @patch('sys.stderr', new_callable=StringIO)
+    @patch('edir_reminder_service.connection.connect_to_ldap', error_connect_to_ldap)
+    def test_110_ldap_error_is_displayed(self, mock_stderr, mock_stdout):
+        rc = main(['-c', os.path.dirname(__file__) + "/password.conf" ])
+        self.assertEqual(rc, 1)
+        
+        self.assertTrue(mock_stderr.getvalue().startswith("LDAP error: Mock LDAP Error\n"))
 
 if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(TestMain)

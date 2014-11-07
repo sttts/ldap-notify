@@ -142,23 +142,19 @@ def main(argv):
 
 	except ConfigParser.NoOptionError, e:
 		print >> sys.stderr, "Configuration error: %s" % str(e)
-		raise SysExitException(2)
+		return 2
 	except ConfigError, e:
 		print >> sys.stderr, "Configuration error: %s" % str(e)
-		raise SysExitException(2)
+		return 2
 	except ldap.LDAPError, e:
 		msg = e.args[0]['desc'] if 'desc' in e.args[0] else str(e)
 		print >> sys.stderr, "LDAP error: %s" % msg
-		raise SysExitException(1)
+		return 1
 	except SMTPException, e:
 		print >> sys.stderr, "SMTP error: %s" % str(e)
-		raise SysExitException(1)
-		
-	#except Exception, e:
-	#	print >> sys.stderr, "Error: %s" % str(e)
-	#	sys.exit(2)
+		return 1
 	except KeyboardInterrupt:
-		raise SysExitException(253)
+		return 253
 	except SysExitException, e:
 		return e.rc
 	else:
