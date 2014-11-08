@@ -8,9 +8,9 @@ import edir_reminder_service.utils as utils
 import edir_reminder_service.mail as mail
 
 def search_users(config, con, fltr=""):
-    attr_list = ["mail", "cn", "loginDisabled", config.notify_attribute, config.expiry_attribute, 'fullName']
-    log.info("Searching for (&(objectclass=pwmUser)%s) at '%s' and its subtree" % (fltr, config.base_context))
-    users = con.search_s(config.base_context, ldap.SCOPE_SUBTREE, "(&(objectclass=pwmUser)%s)" % fltr, attr_list)
+    attr_list = ["mail", "cn", config.notify_attribute, config.expiry_attribute, 'fullName']
+    log.info("Searching for (&(objectClass=pwmUser)(!(loginDisabled=true))%s) at '%s' and its subtree" % (fltr, config.base_context))
+    users = con.search_s(config.base_context, ldap.SCOPE_SUBTREE, "(&(objectClass=pwmUser)(!(loginDisabled=true))%s)" % fltr, attr_list)
     return users
 
 def ldap_user_to_user(config, cn, ldap_user):
@@ -35,7 +35,7 @@ def ldap_user_to_user(config, cn, ldap_user):
     
 
 def search_users_without_grace_logins(config, con):
-    users = search_users(config, con, "(&(loginGraceRemaining=0)(loginDisabled=false))")    
+    users = search_users(config, con, "(loginGraceRemaining=0)")    
     return list(ldap_user_to_user(config, cn, ldap_user) for cn, ldap_user in users)
 
 
@@ -46,20 +46,15 @@ def users_for_rule(config, con, rule):
         # filter out those whose notify attribute shows a notification in less of the days of this rule
         if config.notify_attribute in ldap_user:
             try:
-                # disabled users are skipped
-                if 'loginDisabled' in ldap_user and ldap_user['loginDisabled'][0]:
-                    log.debug("Skipping %s because it's disabled" % cn)
-                    continue
-
                 # check old notify attribute
                 if config.notify_attribute in ldap_user:
                     notify_attribute_value = ldap_user[config.notify_attribute][0]
                     parts = notify_attribute_value.split(':')                    
                         
                     def fix_user():
-                        log.warn("%sDeleting invalid attribute of %s: '%s: %s'" % ('DRY: ' if config.test.dry else 'TEST:' if config.test.test else '',
+                        log.warn("%sDeleting invalid attribute of %s: '%s: %s'" % ('DRY: ' if config.dry else 'TEST:' if config.test.enabled else '',
                                                                                  cn, config.notify_attribute, notify_attribute_value))
-                        if not config.test.dry:
+                        if not config.dry:
                             con.modify_s(cn, [
                                 (ldap.MOD_DELETE, config.notify_attribute)
                             ])
@@ -104,10 +99,10 @@ def users_for_rule(config, con, rule):
 
 def mark_user_notified(config, con, user, rule, restricted):
     marker = g.NOW.strftime(g.LDAP_TIME_FORMAT) + ':' + str(rule.days)
-    log.info('%sMarking user %s notified with %s' % ('RESTRICTED: ' if restricted else 'DRY: ' if config.test.dry else '', 
+    log.info('%sMarking user %s notified with %s' % ('RESTRICTED: ' if restricted else 'DRY: ' if config.dry else '', 
                                                     user.cn, marker))
-    if not restricted and not config.test.dry and not config.test.test:
-        con.modify_s(user.cn, [
+    if not restricted and not config.dry and not config.test.enabled:
+        con.modify_s(user.dn, [
             (ldap.MOD_REPLACE, config.notify_attribute, marker)
         ])
     
@@ -118,7 +113,7 @@ def notify_users(config, con, users, rule):
     notified = []
     for user in users:
         try:
-            restricted = not (user.cn in config.test.restrict_to_users or user.dn in config.test.restrict_to_users)
+            restricted = config.test.restrict_to_users and not (user.cn in config.test.restrict_to_users or user.dn in config.test.restrict_to_users)
             mailer.send_user_mail(rule, user, restricted)
             mark_user_notified(config, con, user, rule, restricted)
             notified.append(user)

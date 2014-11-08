@@ -5,19 +5,21 @@ from mockldap import MockLdap
 
 import edir_reminder_service.globals as g
 
-def ldap_time(days=0):
-    return (datetime.datetime.utcnow() + timedelta(days=days)).strftime(g.LDAP_TIME_FORMAT)
+def ldap_time(**kwargs):
+    return (datetime.datetime.utcnow() + timedelta(**kwargs)).strftime(g.LDAP_TIME_FORMAT)
 
-def ldap_user(name, mail=None, pwmUser=True, expire=45, notify_string=None, grace=3, disabled=False):
+def ldap_user(name, mail=None, pwmUser=True, expire=45, notify_string=None, grace=3, disabled=False, fullName=None):
     dn = 'cn=%s,ou=users,dc=localhost' % name
     pwd = '%s_secret' % name
     attr = {
         'cn': [name],
+        'dn': [dn],
         'userPassword': [pwd],
         'passwordExpirationTime': [ldap_time(days=expire)],
         'loginGraceRemaining': [grace],
-        'loginDisabled': [disabled],
+        'loginDisabled': ['true' if disabled else 'false'],
         'objectClass': ['top', 'person'] + ['pwmUser'] if pwmUser else [],
+        'fullName': fullName if fullName else name
     }
     if mail is not None:
         attr['mail'] = [mail]
@@ -52,25 +54,26 @@ class LocalLDAPTests(unittest.TestCase):
             
         if notified:
             notified_days, rule = notified
-            notify_string = '%s:%i' % (ldap_time(notified_days), rule)
+            notify_string = '%s:%i' % (ldap_time(days=notified_days), rule)
         else:
             notify_string = None
       
-        self.ldapobj.add_s(ldap_user(name, mail=mail, expiry=expire, notify_string=notify_string, grace=grace, disabled=disabled))
+        dn, attrs = ldap_user(name, mail=mail, expire=expire, notify_string=notify_string, grace=grace, disabled=disabled)
+        print 'Adding user dn=%s: %r' % (dn, attrs)
+        self.ldapobj.add_s(dn, attrs.items())
     
     @classmethod
     def setUpClass(cls):
         cls.mockldap = MockLdap(cls.directory)
-        #self.db.addTreeItems('ou=users,dc=localhost')
 
     @classmethod
     def tearDownClass(cls):
-        del cls.mockldap        
+        del cls.mockldap
 
     def setUp(self):
         # Patch ldap.initialize
         self.mockldap.start()
-        self.ldapobj = self.mockldap['ldap://localhost/']
+        self.ldapobj = self.mockldap['ldap://ldap']
         
     def tearDown(self):
         # Stop patching ldap.initialize and reset state.

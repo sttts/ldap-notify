@@ -84,7 +84,7 @@ class TestMain(unittest.TestCase):
         self.assertTrue(mock_run.called)
         
         config = mock_run.call_args[0][0]
-        self.assertTrue(config.test.dry)
+        self.assertTrue(config.dry)
 
     @patch('edir_reminder_service_main.run')
     def test_090_test_sets_config_test_test(self, mock_run):
@@ -93,7 +93,7 @@ class TestMain(unittest.TestCase):
         self.assertTrue(mock_run.called)
         
         config = mock_run.call_args[0][0]
-        self.assertTrue(config.test.test)
+        self.assertTrue(config.test.enabled)
         self.assertEqual(config.test.to_address, 'foo@localhost')
         
     @patch('edir_reminder_service_main.run')
@@ -124,5 +124,5 @@ class TestMain(unittest.TestCase):
         self.assertTrue(mock_stderr.getvalue().startswith("LDAP error: Mock LDAP Error\n"))
 
 if __name__ == '__main__':
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestMain)
-    unittest.TextTestRunner(verbosity=2).run(suite)
+    import nose
+    nose.run(defaultTest=__name__)

@@ -132,8 +132,8 @@ def main(argv):
 		
 		# merge config with values from command line
 		config.ignore_cert = config.ignore_cert or ignore_cert
-		config.test.dry = config.test.dry or dry
-		config.test.test = config.test.test or test
+		config.dry = config.dry or dry
+		config.test.enabled = config.test.enabled or test
 		config.test.to_address = test_address or config.test.to_address
 		config.test.restrict_to_users = restrict_to_users or config.test.restrict_to_users
 

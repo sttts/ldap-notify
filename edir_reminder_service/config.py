@@ -25,6 +25,7 @@ expiry_attribute = passwordExpirationTime
 notify_attribute = pwmNotify
 mail_server_address = localhost
 log_file_path = /dev/stdout
+dry = false
 
 [smtp]
 server =
@@ -42,8 +43,7 @@ subject = Login will expire soon
 text_template = {text_template!s}
 
 [test]
-dry = false
-test = false
+enabled = false
 to_address = {root_mail!s}
 send_message = true
 restrict_to_users =
@@ -83,6 +83,7 @@ def load(filename = None):
     c['expiry_attribute'] = config.get("common", "expiry_attribute").strip() or None
     c['notify_attribute'] = config.get("common", "notify_attribute").strip() or None
     c['log_file_path'] = config.get("common", "log_file_path").strip() or None
+    c['dry'] = config.getboolean("common", "dry")
     
     c['smtp'] = {}
     c['smtp']['server'] = config.get("smtp", "server").strip() or None
@@ -100,8 +101,7 @@ def load(filename = None):
     c['admin']['text_template'] = config.get("admin", "text_template").strip() or None
     
     c['test'] = {}
-    c['test']['test'] = config.getboolean("test", "test")
-    c['test']['dry'] = config.getboolean("test", "dry")
+    c['test']['enabled'] = config.getboolean("test", "enabled")
     c['test']['to_address'] = config.get("test", "to_address").strip() or None
     c['test']['send_message'] = config.getboolean("test", "send_message")
     c['test']['restrict_to_users'] = restrict_user_list_parse(config.get("test", "restrict_to_users", "").strip())
