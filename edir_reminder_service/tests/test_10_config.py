@@ -29,8 +29,8 @@ class TestConfig(unittest.TestCase):
         
         self.assertEqual(c.server, 'ldap://localhost')
         self.assertEqual(c.base_context, 'dc=localhost')
-        self.assertEqual(c.bind_dn, 'cn=admin,dc=localhost')
-        self.assertEqual(c.bind_password, 'novell')
+        self.assertEqual(c.bind_dn, 'cn=admin,ou=users,dc=localhost')
+        self.assertEqual(c.bind_password, 'admin_secret')
         self.assertEqual(c.starttls, True)
         self.assertEqual(c.expiry_attribute, 'passwordExpirationTime')
         self.assertEqual(c.notify_attribute, 'pwmNotify')

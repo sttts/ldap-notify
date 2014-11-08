@@ -8,6 +8,7 @@ from edir_reminder_service_main import main
 import edir_reminder_service.globals as g
 
 import ldap
+
 def error_connect_to_ldap(config):
     raise ldap.LDAPError('Mock LDAP Error')
 
@@ -46,6 +47,8 @@ class TestMain(unittest.TestCase):
     @patch('edir_reminder_service_main.run')
     def test_040_main_sets_globals(self, mock_run):
         rc = main(['-c', os.path.dirname(__file__) + "/password.conf"])
+        self.assertEqual(rc, 0)
+
         self.assertTrue(mock_run.called)
         self.assertEqual(g.DEBUG, 0)
         self.assertFalse(g.VERBOSE)
