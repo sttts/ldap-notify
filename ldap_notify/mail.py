@@ -69,6 +69,7 @@ class MailHandler(object):
             'months_left': str((expiry_time - g.NOW).days / 30),
             'rule_days': str(rule.days),
             'cn': user.cn,
+            'dn': user.dn,
             'fullname': user.fullName if user.fullName else "Unknown User"
         }
         
