@@ -4,9 +4,9 @@ from StringIO import StringIO
 import logging
 log = logging.getLogger('edir-reminder-server')
 
-from edir_reminder_service import ConfigError
-import edir_reminder_service.utils as utils
-import edir_reminder_service.globals as g
+from ldap_notify import ConfigError
+import ldap_notify.utils as utils
+import ldap_notify.globals as g
 
 SERVICE_NAME = "eDir Login/Password Email Reminder Service"
 HOSTNAME = socket.gethostname()

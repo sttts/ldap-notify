@@ -7,10 +7,10 @@ setup(name='edir-reminder-service',
     author='Dr. Stefan Schimanski',
     author_email='stefan.schimanski@gmail.com',
     url='https://github.com/sttts/edir-reminder-service',
-    packages=['edir_reminder_service'],
+    packages=['ldap_notify'],
     #data_files=[
     #	('/etc/edir-reminder-service', ['login.conf', 'password.conf']),
     #],
     package_data = {'edir_autoyast_ws': ['templates/*']},
-    py_modules = ['edir_reminder_service_main']
+    py_modules = ['ldap_notify_main']
 )

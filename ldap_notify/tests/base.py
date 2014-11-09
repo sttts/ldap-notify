@@ -3,7 +3,7 @@ import datetime
 from datetime import timedelta
 from mockldap import MockLdap
 
-import edir_reminder_service.globals as g
+import ldap_notify.globals as g
 
 def ldap_time(**kwargs):
     return (datetime.datetime.utcnow() + timedelta(**kwargs)).strftime(g.LDAP_TIME_FORMAT)

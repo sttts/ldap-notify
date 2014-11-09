@@ -1,2 +1,2 @@
 class ConfigError(Exception):
-	pass
+    pass

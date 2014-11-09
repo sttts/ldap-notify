@@ -1,11 +1,11 @@
 import unittest
 import os
 
-import edir_reminder_service.config
+import ldap_notify.config
 
 class TestConfig(unittest.TestCase):
     def test_10_default_config_loads(self):
-        c = edir_reminder_service.config.load()
+        c = ldap_notify.config.load()
         
         # some selection of default values
         self.assertEqual(c.server, 'ldap://localhost')
@@ -25,7 +25,7 @@ class TestConfig(unittest.TestCase):
 
 
     def test_20_loads_config(self):
-        c = edir_reminder_service.config.load(os.path.dirname(__file__) + "/password-tls.conf")
+        c = ldap_notify.config.load(os.path.dirname(__file__) + "/password-tls.conf")
         
         self.assertEqual(c.server, 'ldap://ldap')
         self.assertEqual(c.base_context, 'dc=localhost')
@@ -44,7 +44,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(c.rules[1].subject, '$days_left days left')
         
     def test_30_loads_config_without_tls(self):
-        c = edir_reminder_service.config.load(os.path.dirname(__file__) + "/password.conf")
+        c = ldap_notify.config.load(os.path.dirname(__file__) + "/password.conf")
         
         self.assertFalse(c.starttls)
         self.assertFalse(c.smtp.starttls)

@@ -1,11 +1,11 @@
 import ldap
 from datetime import timedelta, datetime
 import logging
-log = logging.getLogger('edir_reminder_service.algorithm')
+log = logging.getLogger('ldap_notify.algorithm')
                     
-import edir_reminder_service.globals as g
-import edir_reminder_service.utils as utils
-import edir_reminder_service.mail as mail
+import ldap_notify.globals as g
+import ldap_notify.utils as utils
+import ldap_notify.mail as mail
 
 def search_users(config, con, fltr=""):
     attr_list = ["mail", "cn", config.notify_attribute, config.expiry_attribute, 'fullName']

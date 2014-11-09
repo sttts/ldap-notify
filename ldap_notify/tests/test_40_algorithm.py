@@ -2,13 +2,13 @@ import os
 from mock import *
 from StringIO import StringIO
 
-from edir_reminder_service.tests.base import LocalLDAPTests, ldap_time
-import edir_reminder_service.main
-from edir_reminder_service.main import main
+from ldap_notify.tests.base import LocalLDAPTests, ldap_time
+import ldap_notify.main
+from ldap_notify.main import main
 
 class TestAlgorithm(LocalLDAPTests):
     @patch('sys.stderr', new_callable=StringIO)
-    @patch('edir_reminder_service.main.run', wraps=edir_reminder_service.main.run)
+    @patch('ldap_notify.main.run', wraps=ldap_notify.main.run)
     @patch('smtplib.SMTP')
     def test_10_finds_expired_users(self, mock_smtp, mock_run, mock_stderr):
         # prepare users
@@ -25,7 +25,7 @@ class TestAlgorithm(LocalLDAPTests):
         self.assertEqual(SMTP.sendmail.call_count, 6)
 
     @patch('sys.stderr', new_callable=StringIO)
-    @patch('edir_reminder_service.main.run', wraps=edir_reminder_service.main.run)
+    @patch('ldap_notify.main.run', wraps=ldap_notify.main.run)
     @patch('smtplib.SMTP')
     def test_20_sends_notification_only_once(self, mock_smtp, mock_run, mock_stderr):
         # prepare users
@@ -50,7 +50,7 @@ class TestAlgorithm(LocalLDAPTests):
         self.assertEqual(SMTP.sendmail.call_count, 7)
 
     @patch('sys.stderr', new_callable=StringIO)
-    @patch('edir_reminder_service.main.run', wraps=edir_reminder_service.main.run)
+    @patch('ldap_notify.main.run', wraps=ldap_notify.main.run)
     @patch('smtplib.SMTP')
     def test_30_notify_again_when_time_passes(self, mock_smtp, mock_run, mock_stderr):
         # prepare users
@@ -95,7 +95,7 @@ class TestAlgorithm(LocalLDAPTests):
         self.assertEqual(SMTP.sendmail.call_count, 16)
 
     @patch('sys.stderr', new_callable=StringIO)
-    @patch('edir_reminder_service.main.run', wraps=edir_reminder_service.main.run)
+    @patch('ldap_notify.main.run', wraps=ldap_notify.main.run)
     @patch('smtplib.SMTP')
     def test_40_notifies_again_after_smtp_error(self, mock_smtp, mock_run, mock_stderr):
         self.addUser(expire=23, mail=True)
@@ -118,7 +118,7 @@ class TestAlgorithm(LocalLDAPTests):
         self.assertEqual(SMTP.sendmail.call_count, 2)
         
     @patch('sys.stderr', new_callable=StringIO)
-    @patch('edir_reminder_service.main.run', wraps=edir_reminder_service.main.run)
+    @patch('ldap_notify.main.run', wraps=ldap_notify.main.run)
     @patch('smtplib.SMTP')
     def test_50_notify_again_with_old_notify_values(self, mock_smtp, mock_run, mock_stderr):
         self.addUser(expire=35, mail=True, notified=(-178,7))
@@ -137,7 +137,7 @@ class TestAlgorithm(LocalLDAPTests):
         self.assertEqual(SMTP.sendmail.call_count, 3)
         
     @patch('sys.stderr', new_callable=StringIO)
-    @patch('edir_reminder_service.main.run', wraps=edir_reminder_service.main.run)
+    @patch('ldap_notify.main.run', wraps=ldap_notify.main.run)
     @patch('smtplib.SMTP')
     def test_60_does_not_sends_users_mails_in_dry_mode(self, mock_smtp, mock_run, mock_stderr):
         # prepare users
@@ -152,7 +152,7 @@ class TestAlgorithm(LocalLDAPTests):
         self.assertEqual(SMTP.sendmail.call_count, 0)
 
     @patch('sys.stderr', new_callable=StringIO)
-    @patch('edir_reminder_service.main.run', wraps=edir_reminder_service.main.run)
+    @patch('ldap_notify.main.run', wraps=ldap_notify.main.run)
     @patch('smtplib.SMTP')
     def test_60_ignores_disabled_users(self, mock_smtp, mock_run, mock_stderr):
         # prepare users
@@ -169,7 +169,7 @@ class TestAlgorithm(LocalLDAPTests):
         self.assertEqual(SMTP.sendmail.call_count, 6)
         
     @patch('sys.stderr', new_callable=StringIO)
-    @patch('edir_reminder_service.main.run', wraps=edir_reminder_service.main.run)
+    @patch('ldap_notify.main.run', wraps=ldap_notify.main.run)
     @patch('smtplib.SMTP')
     def test_70_does_not_send_mails_for_users_without_mail(self, mock_smtp, mock_run, mock_stderr):
         # prepare users

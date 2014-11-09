@@ -9,10 +9,10 @@ import locale
 from datetime import datetime
 from smtplib import SMTPException
 
-import edir_reminder_service.config
-import edir_reminder_service.connection
-from edir_reminder_service import ConfigError
-import edir_reminder_service.globals as g
+import ldap_notify.config
+import ldap_notify.connection
+from ldap_notify import ConfigError
+import ldap_notify.globals as g
 
 # add virtualenv path to PYTHON_PATH, so libs are found
 virtualenv_path = os.path.dirname(__file__) + '/env'
@@ -42,8 +42,8 @@ Parameters:'
 
 def run(config):
 	# start the algorithm
-	con = edir_reminder_service.connection.connect_to_ldap(config)
-	import edir_reminder_service.algorithm as algorithm
+	con = ldap_notify.connection.connect_to_ldap(config)
+	import ldap_notify.algorithm as algorithm
 	if g.DEBUG > 5:
 		print repr(algorithm.search_users(config, con))
 	
@@ -113,7 +113,7 @@ def main(argv):
 			elif opt in ['-k']:
 				ignore_cert = True
 			elif opt in ['--restrict']:
-				restrict_to_users = edir_reminder_service.config.restrict_user_list_parse(arg)
+				restrict_to_users = ldap_notify.config.restrict_user_list_parse(arg)
 	
 		if not config_file or args:
 			usage()
@@ -129,7 +129,7 @@ def main(argv):
 					format='%(asctime)s %(levelname)s: %(message)s')
 
 		# load configuration
-		config = edir_reminder_service.config.load(filename=config_file)
+		config = ldap_notify.config.load(filename=config_file)
 		
 		# merge config with values from command line
 		config.ignore_cert = config.ignore_cert or ignore_cert

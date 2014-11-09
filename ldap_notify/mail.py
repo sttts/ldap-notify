@@ -3,12 +3,12 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import locale
 import logging
-log = logging.getLogger('edir_reminder_service.mail')
+log = logging.getLogger('ldap_notify.mail')
 import smtplib
 from string import Template
 
-import edir_reminder_service.globals as g
-from edir_reminder_service import ConfigError
+import ldap_notify.globals as g
+from ldap_notify import ConfigError
 
 class MailHandler(object):
     def __init__(self, config):

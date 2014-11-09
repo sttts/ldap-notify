@@ -1,6 +1,6 @@
 import ldap
 import logging
-log = logging.getLogger('edir_reminder_service.connection')
+log = logging.getLogger('ldap_notify.connection')
 
 # set timeouts to 10s
 ldap.set_option(ldap.OPT_NETWORK_TIMEOUT, 10.0)
