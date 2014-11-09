@@ -2,7 +2,7 @@ import os
 import socket
 from StringIO import StringIO
 import logging
-log = logging.getLogger('edir-reminder-server')
+log = logging.getLogger('ldap-notify.config')
 
 from ldap_notify import ConfigError
 import ldap_notify.utils as utils
