@@ -22,7 +22,7 @@ class TestConfig(unittest.TestCase):
         self.assertTrue(c.test.to_address.startswith('root@'))
         self.assertEqual(c.restrict_to_users, set())
         self.assertEqual(c.rules, [])
-
+        self.assertEqual(c.user_objectclass, 'person')
 
     def test_20_loads_config(self):
         c = ldap_notify.config.load(os.path.dirname(__file__) + "/password-tls.conf")
@@ -42,6 +42,7 @@ class TestConfig(unittest.TestCase):
         self.assertTrue(c.rules[0].from_address.startswith('root@'))
         self.assertTrue(c.rules[0].text_template.endswith("/templates/notify.tmpl.txt"))
         self.assertEqual(c.rules[1].subject, '$days_left days left')
+        self.assertEqual(c.user_objectclass, 'pwmUser')
         
     def test_30_loads_config_without_tls(self):
         c = ldap_notify.config.load(os.path.dirname(__file__) + "/password.conf")

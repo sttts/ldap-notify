@@ -9,8 +9,9 @@ import ldap_notify.mail as mail
 
 def search_users(config, con, fltr=""):
     attr_list = ["mail", "cn", config.notify_attribute, config.expiry_attribute, 'fullName']
-    log.info("Searching for (&(objectClass=pwmUser)(!(loginDisabled=true))%s) at '%s' and its subtree" % (fltr, config.base_context))
-    users = con.search_s(config.base_context, ldap.SCOPE_SUBTREE, "(&(objectClass=pwmUser)(!(loginDisabled=true))%s)" % fltr, attr_list)
+    fltr = "(&(objectClass=%s)(!(loginDisabled=true))%s)" % (config.user_objectclass, fltr)
+    log.info("Searching for %s at '%s' and its subtree" % (fltr, config.base_context))
+    users = con.search_s(config.base_context, ldap.SCOPE_SUBTREE, fltr, attr_list)
     return users
 
 def ldap_user_to_user(config, cn, ldap_user):

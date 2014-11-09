@@ -27,6 +27,7 @@ mail_server_address = localhost
 log_file_path = /dev/stdout
 dry = false
 restrict_to_users =
+user_objectclass = person
 
 [smtp]
 server =
@@ -82,6 +83,7 @@ def load(filename = None):
     c['base_context'] = config.get("common", "base_context").strip() or None
     c['expiry_attribute'] = config.get("common", "expiry_attribute").strip() or None
     c['notify_attribute'] = config.get("common", "notify_attribute").strip() or None
+    c['user_objectclass'] = config.get("common", "user_objectclass").strip() or None
     c['log_file_path'] = config.get("common", "log_file_path").strip() or None
     c['dry'] = config.getboolean("common", "dry")
     c['restrict_to_users'] = restrict_user_list_parse(config.get("common", "restrict_to_users", "").strip())
