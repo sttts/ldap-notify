@@ -64,13 +64,15 @@ def restrict_user_list_parse(s):
 # load config file
 def load(filename = None):
     import ConfigParser
-    config = ConfigParser.SafeConfigParser()
-    config.readfp(StringIO(default_cfg))
-    
+    config_file = ConfigParser.SafeConfigParser()
+    config_file.readfp(StringIO(default_cfg))
     if filename:
         log.info('Reading config file %s' % filename)
-        config.read(filename)
+        config_file.readfp(open(filename))
     
+    return config_file
+
+def evaluate(config):
     c = {}
     
     c['server'] = config.get("common", "server").strip() or None

@@ -38,6 +38,7 @@ Parameters:'
   --time <timestamp>            simulate current UTC time (format: 20141031162633Z)
   -v, --verbose                 verbose logging
   -d, --debug                   debug logging
+  --print-conf                  print the used configuration to console and exit
 """
 
 def run(config):
@@ -77,19 +78,20 @@ def main(argv):
 		locale.setlocale(locale.LC_ALL, "")
 	
 		# default values
-		ignore_cert = False
+		ignore_cert = None
 		config_file = None
 		debug = 0
 		verbose = False
 		now = datetime.utcnow()
-		dry = False
-		test = False
+		dry = None
+		test = None
 		test_address = None
 		restrict_to_users = None
+		print_conf = None
 	
 		# parse arguments	
 		try:
-			opts, args = getopt.getopt(argv, "hc:dvk", ["help", "config=", "time=", "test=", 'dry', "debug", "verbose", "restrict="])
+			opts, args = getopt.getopt(argv, "hc:dvk", ["help", "config=", "time=", "test=", 'dry', "debug", "verbose", "restrict=", "print-conf"])
 		except getopt.GetoptError:
 			usage()
 			raise SysExitException(2)
@@ -113,7 +115,9 @@ def main(argv):
 			elif opt in ['-k']:
 				ignore_cert = True
 			elif opt in ['--restrict']:
-				restrict_to_users = ldap_notify.config.restrict_user_list_parse(arg)
+				restrict_to_users = arg
+			elif opt in ['--print-conf']:
+				print_conf = True
 	
 		if not config_file or args:
 			usage()
@@ -129,14 +133,26 @@ def main(argv):
 					format='%(asctime)s %(levelname)s: %(message)s')
 
 		# load configuration
-		config = ldap_notify.config.load(filename=config_file)
+		config_file = ldap_notify.config.load(filename=config_file)
 		
 		# merge config with values from command line
-		config.ignore_cert = config.ignore_cert or ignore_cert
-		config.dry = config.dry or dry
-		config.test.enabled = config.test.enabled or test
-		config.test.to_address = test_address or config.test.to_address
-		config.restrict_to_users = restrict_to_users or config.restrict_to_users
+		if ignore_cert!=None:      config_file.set('common', 'ignore_cert', 'true' if ignore_cert else 'false')
+		if dry!=None:              config_file.set('common', 'dry', 'true' if dry else 'false')
+		if test!=None:             config_file.set('test', 'enabled', 'true' if test else 'false')
+		if test_address!=None:     config_file.set('test', 'to_address', test_address)
+		if restrict_to_users!=None:config_file.set('common', 'restrict_to_users', restrict_to_users)
+
+		# evaluate config_file
+		config = ldap_notify.config.evaluate(config_file)
+		log.debug('dry = %s, %s' % (str(dry), str(config.dry)))
+
+		# print config only?
+		if print_conf:
+			import StringIO
+			f = StringIO.StringIO()
+			config_file.write(f)
+			print f.getvalue()
+			return 0
 
 		# the actual code doing stuff
 		run(config)

@@ -123,6 +123,35 @@ class TestMain(unittest.TestCase):
         
         self.assertTrue(mock_stderr.getvalue().startswith("LDAP error: Mock LDAP Error\n"))
 
+    @patch('sys.stdout', new_callable=StringIO)
+    @patch('sys.stderr', new_callable=StringIO)
+    @patch('ldap_notify.main.run')
+    def test_120_print_conf_config_can_be_read_again(self, mock_run, mock_stderr, mock_stdout):
+        # call
+        rc = main(['-c', os.path.dirname(__file__) + "/password.conf", '--dry', '--print-conf'])
+        self.assertEqual(rc, 0)
+        self.assertEqual(mock_stderr.getvalue(), '')
+        self.assertFalse(mock_run.called)
+        
+        # write config into file
+        import tempfile
+        f = tempfile.NamedTemporaryFile(delete=False)
+        f.write(mock_stdout.getvalue())
+        f.close()
+        
+        try:            
+            # use temp file as config
+            rc = main(['-c', f.name])
+            self.assertEqual(rc, 0)
+            self.assertEqual(mock_stderr.getvalue(), '')
+            self.assertTrue(mock_run.called)
+            
+            # check that option from the first call are set in the config now 
+            config = mock_run.call_args[0][0]
+            self.assertTrue(config.dry)
+        finally:
+            os.remove(f.name)
+
 if __name__ == '__main__':
     import nose
     nose.run(defaultTest=__name__)
