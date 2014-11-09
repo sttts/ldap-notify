@@ -73,7 +73,7 @@ class MailHandler(object):
         }
         
         # send where?
-        to = user.mail if not self.config.test.enabled else self.config.test.to_address
+        to = user.mail if (not self.config.test.enabled) or restricted or self.config.dry else self.config.test.to_address
         
         # send what?
         if rule.html_template:

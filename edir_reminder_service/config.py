@@ -26,6 +26,7 @@ notify_attribute = pwmNotify
 mail_server_address = localhost
 log_file_path = /dev/stdout
 dry = false
+restrict_to_users =
 
 [smtp]
 server =
@@ -46,7 +47,6 @@ text_template = {text_template!s}
 enabled = false
 to_address = {root_mail!s}
 send_message = true
-restrict_to_users =
 """.format(
     root_mail="root@" + HOSTNAME,
     admin_mail="admin@" + HOSTNAME,
@@ -84,6 +84,7 @@ def load(filename = None):
     c['notify_attribute'] = config.get("common", "notify_attribute").strip() or None
     c['log_file_path'] = config.get("common", "log_file_path").strip() or None
     c['dry'] = config.getboolean("common", "dry")
+    c['restrict_to_users'] = restrict_user_list_parse(config.get("common", "restrict_to_users", "").strip())
     
     c['smtp'] = {}
     c['smtp']['server'] = config.get("smtp", "server").strip() or None
@@ -104,7 +105,6 @@ def load(filename = None):
     c['test']['enabled'] = config.getboolean("test", "enabled")
     c['test']['to_address'] = config.get("test", "to_address").strip() or None
     c['test']['send_message'] = config.getboolean("test", "send_message")
-    c['test']['restrict_to_users'] = restrict_user_list_parse(config.get("test", "restrict_to_users", "").strip())
     
     c['rules'] = []
     for section in config.sections():

@@ -20,7 +20,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(c.dry, False)
         self.assertEqual(c.test.enabled, False)
         self.assertTrue(c.test.to_address.startswith('root@'))
-        self.assertEqual(c.test.restrict_to_users, set())
+        self.assertEqual(c.restrict_to_users, set())
         self.assertEqual(c.rules, [])
 
 

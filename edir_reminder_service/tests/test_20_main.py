@@ -103,7 +103,7 @@ class TestMain(unittest.TestCase):
         self.assertTrue(mock_run.called)
         
         config = mock_run.call_args[0][0]
-        self.assertEqual(config.test.restrict_to_users, set(['foo1', 'foo2', 'cn=foo3,ou=users,dc=localhost']))
+        self.assertEqual(config.restrict_to_users, set(['foo1', 'foo2', 'cn=foo3,ou=users,dc=localhost']))
         
     @patch('edir_reminder_service_main.run')
     def test_110_k_sets_config_ignore_cert(self, mock_run):

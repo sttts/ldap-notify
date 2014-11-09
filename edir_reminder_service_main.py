@@ -28,15 +28,16 @@ def usage():
 	print """Usage: edir-reminder-service [OPTION]... -c <config_file.conf>
 
 Parameters:'
-  -h, --help                  show this help
-  -c, --conf                  mandatory parameter: the config file name
-  -k                          ignore SSL/TLS certificates
-  --dry                       do not send emails or modify anything in ldap
-  --test <test-address>       send all mails to the given address
-  --restrict <DN>;<CN>;...    semicolon seperated DNs and CNs to restrict sent emails to
-  --time <timestamp>          simulate current UTC time (format: 20141031162633Z)
-  -v, --verbose               verbose logging
-  -d, --debug                 debug logging
+  -h, --help                    show this help
+  -c, --conf                    mandatory parameter: the config file name
+  -k                            ignore SSL/TLS certificates
+  --dry                         do not send emails or modify anything in ldap
+  --test <test-address>         send all mails to the given address
+  --restrict <DN>;<CN>;...      restrict notifications to these semicolon 
+                                separated user DNs or CNs
+  --time <timestamp>            simulate current UTC time (format: 20141031162633Z)
+  -v, --verbose                 verbose logging
+  -d, --debug                   debug logging
 """
 
 def run(config):
@@ -135,7 +136,7 @@ def main(argv):
 		config.dry = config.dry or dry
 		config.test.enabled = config.test.enabled or test
 		config.test.to_address = test_address or config.test.to_address
-		config.test.restrict_to_users = restrict_to_users or config.test.restrict_to_users
+		config.restrict_to_users = restrict_to_users or config.restrict_to_users
 
 		# the actual code doing stuff
 		run(config)
