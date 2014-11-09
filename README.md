@@ -107,10 +107,44 @@ The configuration options have the following meaning:
 
 ## Rules ##
 
-The tool is meant to be launched daily e.g. using the cron service on a Linux server. It reads rule definition from a configuration file. Each rule consists of:
+An arbitrary number of rules can be defined in the configuration file. The rules are named according to their number of days before an expiration date when the rule applies. E.g. a 30 day rule is called "30".
 
-- _a number of days_, which at the same time is also the name of the rule
-- _from\_address_, an email address used as sender address
+The default values of a 30 day rule:
+
+```
+[30]
+from_address = <ADMIN FROM ADRESS>
+from_text = <ADMIN FROM TEXT>
+subject = Login will expire soon
+text_template = <LDAP_NOTIFY_DIR>/templates/notify.tmpl.txt
+html_template =
+```
+
+The rule options have the following meaning:
+
+| Option  | Format   | Description | Examples |
+|:------- |:-------- |:----------- |:---------|
+| from_address | email address or empty | the from email address of a notification email | admin@company.com |
+| from_text | string | the from text of a notification email | Password Notification |
+| subject | string | the subject of a notification | expires in $days_left days
+| text_template | absolute filename | the text template for notification emails | /etc/ldap-notify/notify-30.tmpl.txt |
+| html_template | absolute filename | the html template for notification emails | /etc/ldap-notify/notify-30.tmpl.html |
+
+The subject of the notification emails will be interpolated with the same variables as in the email template itself (cf. below).
 
 ## Templates ##
 
+Email templates and email subjects for rules are interpolated with a number of variables. 
+
+In the case of user notification emails:
+
+| Variable  | Format | Description | Examples |
+|:------- |:-------- |:----------- |:---------|
+| expiry_date | string | the localized (according to the LANG setting) date of the expiration timestamp | 12.10.2014 for LANG=de_DE |
+| days_left | integer | number of days from today to the expiration timestamp, rounded down | 4 |
+| weeks_left | integer | number of weeks from today to the expiration timestamp, rounded down | 2 |
+| months_left | integer | number of months from today to the expiration timestamp, roundded down | 1 |
+| rule_days | integer | the days of the applying rule | 14 |
+| cn | string | the common name of the user being notified | hschmidt |
+| dn | DN | the DN of the user being notified | cn=hschmidt,ou=users,dc=localhost |
+| fullname | string | the full name of the user being notified | Hans Schmidt |
