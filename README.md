@@ -187,3 +187,29 @@ Users are notified only once for each rule. The algorithm stores the last sent n
 Moreover, ```ldap-notify``` will handle SMTP errors gracefully: if the SMTP connection fails, the notification attribute is not updated.
 
 If the notification attribute cannot be parsed (i.e. its format is invalid), the notification attribute is deleted before processing the user.
+
+### Development ###
+
+```ldap-notify``` is written in Python. The ```ldap-notify``` has no dependencies other than python-ldap. For development some more dependencies are needed which can be installed with pip:
+
+```
+virtualevn ../env
+. ../env/bin/activate
+pip install -r requirements.txt
+```
+
+After installation the dependencies, the unit tests can be run to verify that everything works as expected:
+
+```
+nosetests --rednose -v ldap_notify/tests
+```
+
+Everything should be green.
+
+To launch the ```ldap-notify``` itself, do the following:
+
+```
+python -mldap_notify.main -c login.conf
+```
+
+Make sure that ```login.conf``` in the current directory is valid.
