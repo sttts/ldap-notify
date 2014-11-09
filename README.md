@@ -132,6 +132,23 @@ The rule options have the following meaning:
 
 The subject of the notification emails will be interpolated with the same variables as in the email template itself (cf. below).
 
+## Test Operation ##
+
+During test of the script it is highly suggested to use the ```--test```, the ```--dry```and ```--restrict``` options or the respective options in the configuration file.
+
+These three options are orthogonal and can be combined depending on the test case at hand:
+
+- ```--test <test-address>```: all emails that are sent by ```ldap-notify``` are sent to the test address, not the actual addresses of the matching users. Moreover, no LDAP modifications are done.
+- ```--dry```: no emails are sent at all, not even to a test user. Moreover, no LDAP modifications are done.
+- ```--restrict <DNs>;<CNs>;...```: all users are processed as in normal operation, but emails are only sent to the admin (for the admin report) and the given users as ```<DNs>``` or ```<CNs>```. Moreover, no LDAP modifications are done to users not in this list.
+
+For debugging and testing it is useful to use verbose and debug output:
+
+- ```-v```: show log output on level ERROR, WARN, INFO. Normally, INFO log output is supressed.
+- ```-d```: show log output on level ERROR, WARN, INFO and DEBUG. Normally, INFO and DEBUG log output is supressed.
+
+The debug parameter ```-d``` can be passed multiple times in order to increase the debug level even further.
+
 ## Templates ##
 
 Email templates and email subjects for rules are interpolated with a number of variables. 
