@@ -47,7 +47,6 @@ text_template = {text_template!s}
 [test]
 enabled = false
 to_address = {root_mail!s}
-send_message = true
 """.format(
     root_mail="root@" + HOSTNAME,
     admin_mail="admin@" + HOSTNAME,
@@ -106,7 +105,6 @@ def load(filename = None):
     c['test'] = {}
     c['test']['enabled'] = config.getboolean("test", "enabled")
     c['test']['to_address'] = config.get("test", "to_address").strip() or None
-    c['test']['send_message'] = config.getboolean("test", "send_message")
     
     c['rules'] = []
     for section in config.sections():
