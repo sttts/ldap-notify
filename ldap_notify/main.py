@@ -25,7 +25,7 @@ class SysExitException(Exception):
 		self.rc = rc
 
 def usage(): 
-	print """Usage: edir-reminder-service [OPTION]... -c <config_file.conf>
+	print """Usage: ldap-notify [OPTION]... -c <config_file.conf>
 
 Parameters:'
   -h, --help                    show this help
