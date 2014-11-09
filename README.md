@@ -28,7 +28,7 @@ Parameters:'
   --print-conf                  print the used configuration to console and exit
 ```
 
-The configuration file given by the mandatory ```-c``` or ```--conf``` option used the common INI file format. This means that it consists of sections with values in the format
+The configuration file given by the mandatory ```-c``` or ```--conf``` option uses the common INI file format. This means that it consists of sections with values in the format
 
 ```
 [section_name]
@@ -36,6 +36,45 @@ attribute=value
 second_attribute = multi
     line
     value
+```
+
+The default configuration is the following:
+
+```
+[common]
+server = ldap://localhost
+bind_dn =
+bind_password =
+bind_password_base64 =
+starttls = false
+ignore_cert = false
+base_context = 
+expiry_attribute = passwordExpirationTime
+notify_attribute = pwmNotify
+mail_server_address = localhost
+log_file_path = /dev/stdout
+dry = false
+restrict_to_users =
+user_objectclass = person
+
+[smtp]
+server =
+ssl = false
+starttls = false
+user =
+password =
+password_base64 =
+
+[admin]
+from_address = root@<HOSTNAME>
+to_address = admin@<HOSTNAME>
+from_text = Login/Password Expiry Notification
+subject = Login will expire soon
+text_template = <LDAP_NOTIFY_DIR>/templates/admin.tmpl.txt
+
+[test]
+enabled = false
+to_address = root@<HOSTNAME>
 ```
 
 ## Rules ##
