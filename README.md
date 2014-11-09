@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/sttts/ldap-notify.svg)](https://travis-ci.org/sttts/ldap-notify)
+
 ldap-notify
 ===========
 
