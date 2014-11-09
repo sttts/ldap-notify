@@ -136,7 +136,7 @@ To: %s
 
 """ % (
     subject,
-    (config.admin.from_text + '<' + config.admin.from_address +'>') if config.admin.from_text else config.admin.from_address,
+    (config.admin.from_text + ' <' + config.admin.from_address +'>') if config.admin.from_text else config.admin.from_address,
     to
 )
 
