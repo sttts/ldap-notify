@@ -3,12 +3,12 @@ from mock import *
 from StringIO import StringIO
 
 from edir_reminder_service.tests.base import LocalLDAPTests, ldap_time
-import edir_reminder_service_main
-from edir_reminder_service_main import main
+import edir_reminder_service.main
+from edir_reminder_service.main import main
 
 class TestRestrict(LocalLDAPTests):
     @patch('sys.stderr', new_callable=StringIO)
-    @patch('edir_reminder_service_main.run', wraps=edir_reminder_service_main.run)
+    @patch('edir_reminder_service.main.run', wraps=edir_reminder_service.main.run)
     @patch('smtplib.SMTP')
     def test_10_only_sends_to_restricted_users(self, mock_smtp, mock_run, mock_stderr):
         # prepare users
@@ -29,7 +29,7 @@ class TestRestrict(LocalLDAPTests):
         self.assertEqual(map(lambda x: x[1][1], SMTP.sendmail.mock_calls), ['mytestuser@localhost', config.admin.to_address])
 
     @patch('sys.stderr', new_callable=StringIO)
-    @patch('edir_reminder_service_main.run', wraps=edir_reminder_service_main.run)
+    @patch('edir_reminder_service.main.run', wraps=edir_reminder_service.main.run)
     @patch('smtplib.SMTP')
     def test_10_only_sends_to_restricted_users_with_dn(self, mock_smtp, mock_run, mock_stderr):
         # prepare users

@@ -4,8 +4,8 @@ from mock import *
 from StringIO import StringIO
 
 from edir_reminder_service.tests.base import LocalLDAPTests
-import edir_reminder_service_main
-from edir_reminder_service_main import main
+import edir_reminder_service.main
+from edir_reminder_service.main import main
 
 class TestConnection(LocalLDAPTests):
     @patch('sys.stderr', new_callable=StringIO)
@@ -28,7 +28,7 @@ class TestConnection(LocalLDAPTests):
         self.assertTrue(self.ldapobj.methods_called() >= ['initialize', 'simple_bind_s', 'search_s'], self.ldapobj.methods_called())
      
     @patch('sys.stderr', new_callable=StringIO)
-    @patch('edir_reminder_service_main.run', wraps=edir_reminder_service_main.run)
+    @patch('edir_reminder_service.main.run', wraps=edir_reminder_service.main.run)
     @patch('smtplib.SMTP')
     def test_30_sends_admin_report(self, mock_smtp, mock_run, mock_stderr):
         rc = main(['-c', os.path.dirname(__file__) + "/password.conf"])
@@ -43,7 +43,7 @@ class TestConnection(LocalLDAPTests):
         self.assertEqual(sendmail_args[:2], (config.admin.from_address, config.admin.to_address))
 
     @patch('sys.stderr', new_callable=StringIO)
-    @patch('edir_reminder_service_main.run', wraps=edir_reminder_service_main.run)
+    @patch('edir_reminder_service.main.run', wraps=edir_reminder_service.main.run)
     @patch('smtplib.SMTP')
     def test_40_sends_no_admin_mail_in_dry_mode(self, mock_smtp, mock_run, mock_stderr):
         rc = main(['-c', os.path.dirname(__file__) + "/password.conf", '--dry'])
@@ -54,7 +54,7 @@ class TestConnection(LocalLDAPTests):
         self.assertFalse(SMTP.sendmail.called)
         
     @patch('sys.stderr', new_callable=StringIO)
-    @patch('edir_reminder_service_main.run', wraps=edir_reminder_service_main.run)
+    @patch('edir_reminder_service.main.run', wraps=edir_reminder_service.main.run)
     @patch('smtplib.SMTP')
     def test_50_sends_admin_report_in_test_mode(self, mock_smtp, mock_run, mock_stderr):
         # prepare users
