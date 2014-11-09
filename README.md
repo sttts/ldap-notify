@@ -136,15 +136,40 @@ The subject of the notification emails will be interpolated with the same variab
 
 Email templates and email subjects for rules are interpolated with a number of variables. 
 
+### Rules Emails###
+
 In the case of user notification emails:
 
 | Variable  | Format | Description | Examples |
 |:------- |:-------- |:----------- |:---------|
-| expiry_date | string | the localized (according to the LANG setting) date of the expiration timestamp | 12.10.2014 for LANG=de_DE |
-| days_left | integer | number of days from today to the expiration timestamp, rounded down | 4 |
-| weeks_left | integer | number of weeks from today to the expiration timestamp, rounded down | 2 |
-| months_left | integer | number of months from today to the expiration timestamp, roundded down | 1 |
-| rule_days | integer | the days of the applying rule | 14 |
-| cn | string | the common name of the user being notified | hschmidt |
-| dn | DN | the DN of the user being notified | cn=hschmidt,ou=users,dc=localhost |
-| fullname | string | the full name of the user being notified | Hans Schmidt |
+| $expiry_date | string | the localized (according to the LANG setting) date of the expiration timestamp | 12.10.2014 for LANG=de_DE |
+| $days_left | integer | number of days from today to the expiration timestamp, rounded down | 4 |
+| $weeks_left | integer | number of weeks from today to the expiration timestamp, rounded down | 2 |
+| $months_left | integer | number of months from today to the expiration timestamp, roundded down | 1 |
+| $rule_days | integer | the days of the applying rule | 14 |
+| $cn | string | the common name of the user being notified | hschmidt |
+| $dn | DN | the DN of the user being notified | cn=hschmidt,ou=users,dc=localhost |
+| $fullname | string | the full name of the user being notified | Hans Schmidt |
+
+### Admin  Emails ###
+
+In the case of admin report emails:
+
+| Variable  | Format | Description | Examples |
+|:------- |:-------- |:----------- |:---------|
+$notified_users | multiline string | users which were notified via email | cn=alice,ou=users,dc=localhost, alice@company.com, 14 Days Rule, Expiry Date: 2014-10-13 14:20:25\ncn=bob,ou=usres,dc=localhost, bob@company.com, 30 Days Rule, Expiry Date: 2014-12-02 11:57:12 |
+$failed_users | multiline string | users where notification failed | as in $notified_users |
+$users_without_email | multiline string | users to be notified, but without email | cn=alice,ou=users,dc=localhost, 14 Days Rule, Expiry Date: 2014-10-13 14:20:25\ncn=bob,ou=usres,dc=localhost, 30 Days Rule, Expiry Date: 2014-12-02 11:57:12 |
+$no_grace_logins | multiline string | users without grace logins | cn=alice,ou=users,dc=localhost, alice@company.com, Expiry Date: 2014-10-13 |
+| $notified_users_length | integer | number of rows in $notified_users | 52 |
+| $failed_users_length | integer | number of rows in $failed_users | 0 |
+| $users_without_email_length | integer | number of rows in $users_without_email | 7 |
+| $no_grace_logins_length | integer | number of rows in $nno_grace_logins | 5 |
+
+## Search ##
+
+The search algorithm in ldap-notify looks for users which
+- have an expiration timestamp within the number of days in the rule,
+- do not match with other rules,
+- are not disabled
+- have 
