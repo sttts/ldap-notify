@@ -18,14 +18,14 @@ class TestMain(unittest.TestCase):
     @patch('sys.stderr', new_callable=StringIO)
     def test_010_shows_help(self, mock_stderr, mock_stdout):
         rc = main(['--help'])
-        self.assertTrue(mock_stdout.getvalue().startswith('Usage: edir-reminder-service [OPTION]...'), [mock_stdout.getvalue()[:40], 'Usage: edir-reminder-service [OPTIONS]'])
+        self.assertTrue(mock_stdout.getvalue().startswith('Usage: ldap-notify [OPTION]...'), [mock_stdout.getvalue()[:40]])
         self.assertEqual(rc, 0)
         
     @patch('sys.stdout', new_callable=StringIO)
     @patch('sys.stderr', new_callable=StringIO)
     def test_020_shows_help_even_after_other_arguments(self, mock_stderr, mock_stdout):
         rc = main(['-v', '--test', 'foo@localhost', '--help', '-d'])
-        self.assertTrue(mock_stdout.getvalue().startswith('Usage: edir-reminder-service [OPTION]...'), [mock_stdout.getvalue()[:40], 'Usage: edir-reminder-service [OPTIONS]'])
+        self.assertTrue(mock_stdout.getvalue().startswith('Usage: ldap-notify [OPTION]...'), [mock_stdout.getvalue()[:40]])
         self.assertEqual(rc, 0)
         
     def test_020_reject_unknown_parameters(self):
