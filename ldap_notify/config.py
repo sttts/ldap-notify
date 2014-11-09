@@ -8,7 +8,7 @@ from ldap_notify import ConfigError
 import ldap_notify.utils as utils
 import ldap_notify.globals as g
 
-SERVICE_NAME = "eDir Login/Password Email Reminder Service"
+SERVICE_NAME = "Login/Password Expiry Notification"
 HOSTNAME = socket.gethostname()
 
 # set defaults
