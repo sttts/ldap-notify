@@ -157,10 +157,10 @@ In the case of admin report emails:
 
 | Variable  | Format | Description | Examples |
 |:------- |:-------- |:----------- |:---------|
-$notified_users | multiline string | users which were notified via email | cn=alice,ou=users,dc=localhost, alice@company.com, 14 Days Rule, Expiry Date: 2014-10-13 14:20:25\ncn=bob,ou=usres,dc=localhost, bob@company.com, 30 Days Rule, Expiry Date: 2014-12-02 11:57:12 |
-$failed_users | multiline string | users where notification failed | as in $notified_users |
-$users_without_email | multiline string | users to be notified, but without email | cn=alice,ou=users,dc=localhost, 14 Days Rule, Expiry Date: 2014-10-13 14:20:25\ncn=bob,ou=usres,dc=localhost, 30 Days Rule, Expiry Date: 2014-12-02 11:57:12 |
-$no_grace_logins | multiline string | users without grace logins | cn=alice,ou=users,dc=localhost, alice@company.com, Expiry Date: 2014-10-13 |
+| $notified_users | multiline string | users which were notified via email | cn=alice,ou=users,dc=localhost, alice@company.com, 14 Days Rule, Expiry Date: 2014-10-13 14:20:25\ncn=bob,ou=usres,dc=localhost, bob@company.com, 30 Days Rule, Expiry Date: 2014-12-02 11:57:12 |
+| $failed_users | multiline string | users where notification failed | as in $notified_users |
+| $users_without_email | multiline string | users to be notified, but without email | cn=alice,ou=users,dc=localhost, 14 Days Rule, Expiry Date: 2014-10-13 14:20:25\ncn=bob,ou=usres,dc=localhost, 30 Days Rule, Expiry Date: 2014-12-02 11:57:12 |
+| $no_grace_logins | multiline string | users without grace logins | cn=alice,ou=users,dc=localhost, alice@company.com, Expiry Date: 2014-10-13 |
 | $notified_users_length | integer | number of rows in $notified_users | 52 |
 | $failed_users_length | integer | number of rows in $failed_users | 0 |
 | $users_without_email_length | integer | number of rows in $users_without_email | 7 |
@@ -168,8 +168,22 @@ $no_grace_logins | multiline string | users without grace logins | cn=alice,ou=u
 
 ## Search ##
 
-The search algorithm in ldap-notify looks for users which
+The search algorithm in ldap-notify looks for users of each rule which satisfy the following conditions:
+
 - have an expiration timestamp within the number of days in the rule,
 - do not match with other rules,
-- are not disabled
-- have 
+- are not disabled,
+- have not received the same notification before.
+
+In addition in case of any of the following conditions only the admin is notified via the admin report, no user notification is sent out:
+
+- have an email address,
+- have grace login available.
+
+### Fault Tolerance ###
+
+Users are notified only once for each rule. The algorithm stores the last sent notification and a timestamp in the ```notify_attribute``` (defined in the ```common```config section). This allows to launch ```ldap-notify``` on multiple servers, *with a time delta to avoid overlap and race conditions*. If the first server fails, the second launch on the second server will notice this and send the notifications on behalf of the first instance.
+
+Moreover, ```ldap-notify``` will handle SMTP errors gracefully: if the SMTP connection fails, the notification attribute is not updated.
+
+If the notification attribute cannot be parsed (i.e. its format is invalid), the notification attribute is deleted before processing the user.
