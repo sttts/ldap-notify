@@ -10,7 +10,7 @@ setup(name='ldap_notify',
     url='https://github.com/sttts/ldap_notify',
     packages=['ldap_notify'],
     data_files=[
-    	(distutils.sysconfig.get_config_var('prefix') + '/etc/ldap-notify', ['conf/login.conf', 'conf/password.conf']),
+    	('/etc/ldap-notify', ['conf/login.conf', 'conf/password.conf']),
     ],
     package_data = {'ldap-notify': ['templates/*']},
     scripts = [ 'scripts/ldap-notify' ]
