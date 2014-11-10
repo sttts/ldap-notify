@@ -191,8 +191,8 @@ In the case of user notification emails the following variables are interpolated
 | $cn | string | the common name of the user being notified | hschmidt |
 | $dn | DN | the DN of the user being notified | cn=hschmidt,ou=users,dc=localhost |
 | $fullname | string | the full name of the user being notified | Hans Schmidt |
-| $object | string | the object in singular, defined by ``object```in the configuration | password |
-| $objects | string | the object in plural, defined by ``objects```in the configuration | passwords |
+| $object | string | the object in singular, defined by ```object``` in the configuration | password |
+| $objects | string | the object in plural, defined by ```objects``` in the configuration | passwords |
 | $Object | string | the singular object with capital letter | Password |
 | $Objects | string | the plural object with capital letter | Passwords |
 
@@ -210,8 +210,8 @@ In the case of admin report emails the following variables are interpolated::
 | $failed_users_length | integer | number of rows in $failed_users | 0 |
 | $users_without_email_length | integer | number of rows in $users_without_email | 7 |
 | $no_grace_logins_length | integer | number of rows in $nno_grace_logins | 5 |
-| $object | string | the object in singular, defined by ``object```in the configuration | password |
-| $objects | string | the object in plural, defined by ``objects```in the configuration | passwords |
+| $object | string | the object in singular, defined by ```object``` in the configuration | password |
+| $objects | string | the object in plural, defined by ```objects``` in the configuration | passwords |
 | $Object | string | the singular object with capital letter | Password |
 | $Objects | string | the plural object with capital letter | Passwords |
 
