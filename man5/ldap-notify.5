@@ -1,0 +1,469 @@
+.TH ldap\-notify
+.SH NAME
+.PP
+ldap\-notify \- LDAP Password/Login Expiration Notification Tool
+.SH SYNOPSIS
+.PP
+Usage: ldap\-notify [OPTION]... \-c \fIconfig_file.conf\fP
+.SH DESCRIPTION
+.PP
+\fB\fCldap\-notify\fR searches users in an LDAP directory whose login or password expires in a certain number of days. These users are notified with a customizable email. The time intervals for the notifications and the email templates can be freely defined. By using a custom LDAP attribute the last notification is stored in the directory such that users are only notified once per rule. Moreover, this mechanism allows running the tool (e.g. via cron) on multiple machine with a certain time delta in order to implement high availabiliy. 
+.SH OPTIONS
+.TP
+\fB\fC\-h\fR, \fB\fC\-\-help\fR
+show this help
+.TP
+\fB\fC\-c\fR, \fB\fC\-\-conf\fR \fIconfig\-file\fP
+mandatory parameter: the config file name
+.TP
+\fB\fC\-k\fR
+ignore SSL/TLS certificates
+.TP
+\fB\fC\-\-dry\fR
+do not send emails or modify anything in ldap
+.TP
+\fB\fC\-\-test\fR \fItest\-address\fP
+send all mails to the given address
+.TP
+\fB\fC\-\-restrict\fR \fIDN\fP;\fICN\fP;...*
+restrict notifications to these semicolon separated user DNs or CNs
+.TP
+\fB\fC\-\-time\fR \fItimestamp\fP
+simulate current UTC time (format: \fB\fC20141031162633Z\fR)
+.TP
+\fB\fC\-v\fR, \fB\fC\-\-verbose\fR
+enable verbose logging
+.TP
+\fB\fC\-d\fR, \fB\fC\-\-debug\fR
+enable debug logging
+.TP
+\fB\fC\-\-print\-conf\fR
+print the used configuration to console and exit
+.SH Configuration
+.PP
+The behaviour of ldap\-notify is defined via a \fIconfig\-file\fP\&. The parameters above will override the options in the configuration file.
+.PP
+The configuration file given by the mandatory \fB\fC\-c\fR or \fB\fC\-\-conf\fR parameter uses the common INI file format. This means that it consists of sections with key/values pairs in the following format:
+.PP
+.RS
+.nf
+[section_name]
+attribute=value
+second_attribute = multi
+    line
+    value
+# comment
+.fi
+.RE
+.PP
+The multi\-line value is useful for long lists like in the \fB\fCrestrict_to_users\fR value.
+.PP
+The default configuration is the following:
+.PP
+.RS
+.nf
+[common]
+server = ldap://localhost
+bind_dn =
+bind_password =
+bind_password_base64 =
+starttls = false
+ignore_cert = false
+base_context = 
+expiry_attribute = passwordExpirationTime
+notify_attribute = pwmNotify
+dry = false
+restrict_to_users =
+user_objectclass = person
+object = password
+objects =
+[smtp]
+server =
+ssl = false
+starttls = false
+user =
+password =
+password_base64 =
+[admin]
+from_address = root@*HOSTNAME*
+to_address = admin@*HOSTNAME*
+from_text = $Object Expiry Notification
+subject = $Object Expiry Notification Report
+text_template = *LDAP_NOTIFY_DIR*/templates/admin.tmpl.txt
+[test]
+enabled = false
+to_address = root@*HOSTNAME*
+.fi
+.RE
+.PP
+The configuration options have the following meaning:
+.SS Common Section
+.TS
+allbox;
+cb cb cb cb
+l l l l
+l l l l
+l l l l
+l l l l
+l l l l
+l l l l
+l l l l
+l l l l
+l l l l
+l l l l
+l l l l
+l l l l
+l l l l
+l l l l
+.
+Option	Format	Description	Examples
+\fB\fCserver\fR	RFC 4516	the server LDAP URI	\fB\fCldap://host:389\fR or \fB\fCldaps://host\fR
+\fB\fCbind_dn\fR	DN or empty	the DN to bind to; can be empty	\fB\fCcn=admin,ou=users,dc=localhost\fR
+\fB\fCbind_password\fR	string	the password to be used during binding	secret
+\fB\fCbind_password_base64\fR	base64 encoded string	an encoded bind password	\fB\fCYWRtaW5fc2VjcmV0\fR
+\fB\fCstarttls\fR	boolean	use starttls on a ldap:// connection	true or false
+\fB\fCignore_cert\fR	boolean	don't check server SSL/TLS certificate	true or false
+\fB\fCbase_context\fR	DN or empty	the base DN to start a subtree search at	\fB\fCou=users,dc=localhost\fR or empty for the root context
+\fB\fCexpiry_attribute\fR	LDAP attribute	the attribute holding the expiration timestamp	passwordExpirationTime
+\fB\fCnotify_attribute\fR	LDAP attribute	the attribute used to store sent notifications	pwmNotify
+\fB\fCdry\fR	boolean	don't send mails or modify LDAP	
+\fB\fCrestrict_to_users\fR	DN or CN list	restrict sent mail and LDAP modifications	\fB\fCcn=admin,ou=users,dc=localhost;root;hschmidt;\fR
+\fB\fCuser_objectclass\fR	LDAP objectClass	an object class name to restrict the user search	pwmUser or person
+\fB\fCobject\fR	string	the object this config talks about	password or login
+\fB\fCobjects\fR	string	the plural string of object	passwords or logins
+.TE
+.PP
+The \fB\fCDN or CN list\fR of `restrict\fIto\fPusers is separated by semi\-colons, spaces or newlines. A non\-trivial example with a multi\-line value is the following:
+.PP
+.RS
+.nf
+restrict_to_user = cn=alice,ou=users,dc=localhost
+    cn=bob,ou=users,dc=localhost
+    root;admin;operations
+.fi
+.RE
+.PP
+The \fB\fCobject\fR and \fB\fCobjects\fR values are only used in templates in order to allow unified templates for e.g. password and login configuration.
+.SS SMTP Section
+.TS
+allbox;
+cb cb cb cb
+l l l l
+l l l l
+l l l l
+l l l l
+l l l l
+l l l l
+.
+Option	Format	Description	Examples
+\fB\fCserver\fR	HOSTNAME[:PORT]	the mail server address	smtp.gmail.com
+\fB\fCssl\fR	boolean	true if the server speaks SSL	true or false
+\fB\fCstarttls\fR	boolean	use starttls after connecting with encryption	true or false
+\fB\fCuser\fR	string	the SMTP user name to authenticate with	hschmidt
+\fB\fCpassword\fR	string	the SMTP password to authenticate with	secret
+\fB\fCpassword_base64\fR	base64 encoded string	the SMTP password encoded with base64	YWRtaW5fc2VjcmV0
+.TE
+.SS Admin Section
+.TS
+allbox;
+cb cb cb cb
+l l l l
+l l l l
+l l l l
+l l l l
+l l l l
+.
+Option	Format	Description	Examples
+\fB\fCfrom_address\fR	email address	the sender address for the admin report	\fB\fCadmin@company.com\fR
+\fB\fCto_address\fR	email address	send the admin report here	\fB\fCadmin_group@company.com\fR
+\fB\fCfrom_text\fR	sender name	the sender name for the admin report	Password Expiry Notification Service
+\fB\fCsubject\fR	string	the admin report subject	Password Expiry Notification Report
+\fB\fCtext_template\fR	absolute filename	the admin report email body template	\fB\fC/etc/ldap\-notify/admin.tmpl.txt\fR
+.TE
+.SS Test Section
+.TS
+allbox;
+cb cb cb cb
+l l l l
+l l l l
+.
+Option	Format	Description	Examples
+\fB\fCenabled\fR	boolean	if true, all emails are sent to the test email address	true or false
+\fB\fCto_address\fR	email address	the test email address	\fB\fCroot@localhost\fR
+.TE
+.PP
+The \fB\fCobject\fR string in the \fB\fCcommon\fR section can be used in the templates such that they work for password and login notification emails.
+.SS Rule Sections
+.PP
+An arbitrary number of rules can be defined in the configuration file. The rules are named according to their number of days before an expiration date when the rule applies. E.g. a 30 day rule is called "30".
+.PP
+The default values of a 30 day rule:
+.PP
+.RS
+.nf
+[30]
+from_address = *ADMIN FROM ADRESS*
+from_text = *ADMIN FROM TEXT*
+subject = $Object will expire soon
+text_template = *LDAP_NOTIFY_DIR*/templates/notify.tmpl.txt
+html_template =
+.fi
+.RE
+.PP
+A quite minimal rules configuration with only one template (the default \fB\fCnotify.tmpl.txt\fR), but customized subject lines looks like this:
+.PP
+.RS
+.nf
+[30]
+subject = $weeks_left weeks left
+[7]
+subject = $days_left days left
+[1]
+subject = Tomorrow
+.fi
+.RE
+.PP
+The rule options have the following meaning:
+.TS
+allbox;
+cb cb cb cb
+l l l l
+l l l l
+l l l l
+l l l l
+l l l l
+.
+Option	Format	Description	Examples
+\fB\fCfrom_address\fR	email address or empty	the notification mail from address	\fB\fCadmin@company.com\fR
+\fB\fCfrom_text\fR	string	the notification mail from text	Password Notification
+\fB\fCsubject\fR	string	the subject of a notification	expires in $days_left days
+\fB\fCtext_template\fR	absolute filename	the notification mail text template	\fB\fC/etc/ldap\-notify/notify\-30.tmpl.txt\fR
+\fB\fChtml_template\fR	absolute filename	the notification mail html template	\fB\fC/etc/ldap\-notify/notify\-30.tmpl.html\fR
+.TE
+.PP
+The subject of the notification emails will be interpolated with the same variables as in the email template itself (cf. below).
+.PP
+By default, HTML mail templates are disabled. Next to the default text template there is also an example notify.tmpl.html. By assigning a template to the html_template option, HTML mail templates will be enabled.
+.SH Test Operation
+.PP
+During test of the script it is highly suggested to use the \fB\fC\-\-test\fR, the \fB\fC\-\-dry\fR and \fB\fC\-\-restrict\fR options or the respective options in the configuration file.
+.PP
+These three options are orthogonal and can be combined depending on the test case at hand:
+.RS
+.IP \(bu 2
+\fB\fC\-\-test\fR \fItest\-address\fP: all emails that are sent by \fB\fCldap\-notify\fR are sent to the test address, not the actual addresses of the matching users. Moreover, no LDAP modifications are done.
+.IP \(bu 2
+\fB\fC\-\-dry\fR: no emails are sent at all, not even to a test user. Moreover, no LDAP modifications are done.
+.IP \(bu 2
+\fB\fC\-\-restrict\fR \fIDNs\fP;\fICNs\fP;...: all users are processed as in normal operation, but emails are only sent to the admin (for the admin report) and the given users as \fIDN\fPs or \fICN\fPs. Moreover, no LDAP modifications are done to users not in this list.
+.RE
+.PP
+For debugging and testing it is useful to use verbose and debug output:
+.RS
+.IP \(bu 2
+\fB\fC\-v\fR: show log output on level ERROR, WARN, INFO. Normally, INFO log output is supressed.
+.IP \(bu 2
+\fB\fC\-d\fR: show log output on level ERROR, WARN, INFO and DEBUG. Normally, INFO and DEBUG log output is supressed.
+.RE
+.PP
+The debug parameter \fB\fC\-d\fR can be passed multiple times in order to increase the debug level even further.
+.SH Templates
+.PP
+Email templates, email subjects and email from strings for rules are interpolated with a number of variables. 
+.SS User Rule Emails
+.PP
+In the case of user notification emails the following variables are interpolated:
+.TS
+allbox;
+cb cb cb cb
+l l l l
+l l l l
+l l l l
+l l l l
+l l l l
+l l l l
+l l l l
+l l l l
+l l l l
+l l l l
+l l l l
+l l l l
+.
+Variable	Format	Description	Examples
+\fB\fC$expiry_date\fR	string	the localized (according to the LANG setting) date of the expiration timestamp	\fB\fC12.10.2014\fR for LANG=de_DE
+\fB\fC$days_left\fR	integer	number of days from today to the expiration timestamp, rounded down	4
+\fB\fC$weeks_left\fR	integer	number of weeks from today to the expiration timestamp, rounded down	2
+\fB\fC$months_left\fR	integer	number of months from today to the expiration timestamp, roundded down	1
+\fB\fC$rule_days\fR	integer	the days of the applying rule	14
+\fB\fC$cn\fR	string	the common name of the user being notified	hschmidt
+\fB\fC$dn\fR	DN	the DN of the user being notified	\fB\fCcn=hschmidt,ou=users,dc=localhost\fR
+\fB\fC$fullname\fR	string	the full name of the user being notified	Hans Schmidt
+\fB\fC$object\fR	string	the object in singular, defined by \fB\fCobject\fR in the configuration	password
+\fB\fC$objects\fR	string	the object in plural, defined by \fB\fCobjects\fR in the configuration	passwords
+\fB\fC$Object\fR	string	the singular object with capital letter	Password
+\fB\fC$Objects\fR	string	the plural object with capital letter	Passwords
+.TE
+.PP
+The \fB\fCobject\fR and \fB\fCobjects\fR variables are defined by the very same options in the configuration. If \fB\fCobjects\fR is empty, a single \fB\fCs\fR character is appended to the \fB\fCobject\fR value.
+.SS Admin Report Emails
+.PP
+In the case of admin report emails the following variables are interpolated::
+.TS
+allbox;
+cb cb cb cb
+l l l l
+l l l l
+l l l l
+l l l l
+l l l l
+l l l l
+l l l l
+l l l l
+l l l l
+l l l l
+l l l l
+l l l l
+.
+Variable	Format	Description	Examples
+\fB\fC$notified_users\fR	multiline string	users which were notified via email	\fB\fCcn=alice,ou=users,dc=localhost, alice@company.com, 14 Days Rule, Expiry Date: 2014\-10\-13 14:20:25\fR
+\fB\fC$failed_users\fR	multiline string	users where notification failed	as in \fB\fC$notified_users\fR
+\fB\fC$users_without_email\fR	multiline string	users to be notified, but without email	\fB\fCcn=alice,ou=users,dc=localhost, 14 Days Rule, Expiry Date: 2014\-10\-13 14:20:25\fR
+\fB\fC$no_grace_logins\fR	multiline string	users without grace logins	\fB\fCcn=alice,ou=users,dc=localhost, alice@company.com, Expiry Date: 2014\-10\-13\fR
+\fB\fC$notified_users_length\fR	integer	number of rows in \fB\fC$notified_users\fR	52
+\fB\fC$failed_users_length\fR	integer	number of rows in \fB\fC$failed_users\fR	0
+\fB\fC$users_without_email_length\fR	integer	number of rows in \fB\fC$users_without_email\fR	7
+\fB\fC$no_grace_logins_length\fR	integer	number of rows in \fB\fC$no_grace_logins\fR	5
+\fB\fC$object\fR	string	the object in singular	password
+\fB\fC$objects\fR	string	the object in plural	passwords
+\fB\fC$Object\fR	string	the singular object with capital letter	Password
+\fB\fC$Objects\fR	string	the plural object with capital letter	Passwords
+.TE
+.PP
+The \fB\fCobject\fR and \fB\fCobjects\fR variables are defined by the very same options in the configuration. If \fB\fCobjects\fR is empty, a single \fB\fCs\fR character is appended to the \fB\fCobject\fR value.
+.PP
+The \fB\fC\&..._length\fR variables count the number of lines in the respective \fB\fC\&..._users\fR variables. These can be used to shows counters (e.g. of failed notifications) at the very top of the admin report.
+.SH Search Algorithm
+.PP
+The search algorithm in `ldap\-notify looks for users of each rule which satisfy the following conditions:
+.RS
+.IP \(bu 2
+have an expiration timestamp within the number of days in the rule,
+.IP \(bu 2
+do not match with other rules,
+.IP \(bu 2
+are not disabled,
+.IP \(bu 2
+have not received the same notification before.
+.RE
+.PP
+In addition in case of any of the following conditions only the admin is notified via the admin report, no user notification is sent out:
+.RS
+.IP \(bu 2
+have an email address,
+.IP \(bu 2
+have grace login available.
+.RE
+.SS Notify Attribute
+.PP
+The algorithm stores the last sent notification and a timestamp in the \fB\fCnotify_attribute\fR (defined in the \fB\fCcommon\fR config section). The value has the following format:
+.PP
+.RS
+.nf
+20140116111356Z:30
+.fi
+.RE
+.PP
+It tells the algorithm that this user was notified at the given timestamp with a 30 days rule.
+.SS Notification Logic
+.PP
+Assume that three rules are defined: 30, 7, 1 and \fB\fCpasswordExpirationTime\fR is used as the expiry attribute. Then three independent LDAP searches are performed, each of them with a filter of the following shape:
+.PP
+.RS
+.nf
+(& (objectClass=person)
+   (!(loginDisabled=true))
+   (& (passwordExpirationTime>=20141112173529Z)
+      (!(passwordExpirationTime>=20141116173529Z))
+      (!(loginGraceRemaining=0))
+   )
+)
+.fi
+.RE
+.PP
+The timestamps used are:
+.RS
+.IP \(bu 2
+1 days: \fB\fCpasswordExpirationTime >= *NOW*\fR and \fB\fCpasswordExpirationTime < *24 HOURS FROM NOW*\fR
+.IP \(bu 2
+7 days: \fB\fCpasswordExpirationTime >= *24 HOURS FROM NOW*\fR and \fB\fCpasswordExpirationTime < *7 DAYS FROM NOW*\fR
+.IP \(bu 2
+30 days: \fB\fCpasswordExpirationTime >= *7*\fR and \fB\fCpasswordExpirationTime < *30 DAYS FROM NOW*\fR\&.
+.RE
+.PP
+To detect that the same notification was sent before, but to cope with old notify attribute values at the same time, the notify attribute is read, e.g. \fB\fC20130116111356Z:30\fR\&. This notify attribute timestamp is considered \fIold\fP if
+.RS
+.IP \(bu 2
+\fB\fCexpirationTime \- last_notify >= 30 days\fR
+.IP \(bu 2
+\fIor\fP the current applied rule (e.g. 7) is smaller than the last notified rule: \fB\fC7 < 30\fR\&.
+.RE
+.PP
+If neither condition matches, the notifiy attribute is current and the user is skipped.
+If at least one condition matches, the user is notified and a new notify attribute is written.
+.SS Fault Tolerance
+.PP
+Users are notified only once for each rule. This allows to launch \fB\fCldap\-notify\fR on multiple servers, \fIwith a time delta to avoid overlap and race conditions\fP\&. If the first server fails, the second launch on the second server will notice this and send the notifications on behalf of the first instance.
+.PP
+Moreover, \fB\fCldap\-notify\fR will handle SMTP errors gracefully: if the SMTP connection fails, the notification attribute is not updated.
+.PP
+If the notification attribute cannot be parsed (i.e. its format is invalid), the notification attribute is deleted before processing the user.
+.SH Development
+.PP
+\fB\fCldap\-notify\fR is written in Python. The \fB\fCldap\-notify\fR has no dependencies other than python\-ldap. After cloning the Github repository with the source code, some more dependencies are needed for development which can be installed with pip:
+.PP
+.RS
+.nf
+virtualevn ../env
+\&. ../env/bin/activate
+pip install \-r requirements.txt
+.fi
+.RE
+.PP
+After installation the dependencies, the unit tests can be run to verify that everything works as expected:
+.PP
+.RS
+.nf
+nosetests \-\-rednose \-v ldap_notify/tests
+.fi
+.RE
+.PP
+Everything should be green.
+.PP
+To launch the \fB\fCldap\-notify\fR itself, do the following:
+.PP
+.RS
+.nf
+python \-mldap_notify.main \-c login.conf
+.fi
+.RE
+.PP
+Make sure that \fB\fClogin.conf\fR in the current directory is valid.
+.PP
+To update the man page from README.md, install \fB\fCmd2man\fRand run:
+.PP
+.RS
+.nf
+man \-M . ldap\-notify
+.fi
+.RE
+.SH AUTHOR
+.PP
+Dr. Stefan Schimanski 
+\[la]stefan.schimanski@gmail.com\[ra]
+.SH SEE ALSO
+.RS
+.IP \(bu 2
+\[la]https://github.com/sttts/ldap-notify\[ra]
+.IP \(bu 2
+\[la]https://build.opensuse.org/package/show/home:sttts/ldap-notify\[ra]
+.RE

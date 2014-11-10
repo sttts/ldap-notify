@@ -367,6 +367,13 @@ python -mldap_notify.main -c login.conf
 
 Make sure that `login.conf` in the current directory is valid.
 
+To update the man page from README.md, install `md2man`and run:
+
+```
+grep -v 'Build Status' README.md | md2man-roff > man5/ldap-notify.5
+man -M . ldap-notify
+```
+
 AUTHOR
 ------
 
