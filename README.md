@@ -36,6 +36,8 @@ attribute=value
 second_attribute = multi
     line
     value
+    
+# comment
 ```
 
 The default configuration is the following:
