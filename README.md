@@ -70,8 +70,8 @@ password_base64 =
 [admin]
 from_address = root@<HOSTNAME>
 to_address = admin@<HOSTNAME>
-from_text = Login/Password Expiry Notification
-subject = Login will expire soon
+from_text = $Object Expiry Notification
+subject = $Object Expiry Notification Report
 text_template = <LDAP_NOTIFY_DIR>/templates/admin.tmpl.txt
 
 [test]

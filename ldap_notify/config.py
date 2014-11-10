@@ -40,7 +40,7 @@ password_base64 =
 from_address = {root_mail!s}
 to_address = {admin_mail!s}
 from_text = $Object Expiry Notification
-subject = $Object will expire soon
+subject = $Object Expiry Notification Report
 text_template = {text_template!s}
 
 [test]
@@ -118,7 +118,7 @@ def evaluate(config):
             "days": rule_num,
             "from_address": config.get(section, "from_address", "root@" + HOSTNAME).strip() if config.has_option(section, "from_address") else c['admin']['from_address'],
             "from_text": config.get(section, "from_text").strip() if config.has_option(section, "from_text") else c['admin']['from_text'],
-            "subject": config.get(section, "subject").strip() if config.has_option(section, "subject") else "Login will expire soon",
+            "subject": config.get(section, "subject").strip() if config.has_option(section, "subject") else "$Object will expire soon",
             "text_template": config.get(section, "text_template").strip() if config.has_option(section, "text_template") else os.path.dirname(__file__) + "/templates/notify.tmpl.txt",
             "html_template": config.get(section, "html_template").strip() if config.has_option(section, "html_template") else None
         })
