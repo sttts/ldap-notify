@@ -118,7 +118,8 @@ def evaluate(config):
             "from_text": config.get(section, "from_text").strip() if config.has_option(section, "from_text") else c['admin']['from_text'],
             "subject": config.get(section, "subject").strip() if config.has_option(section, "subject") else "Login will expire soon",
             "text_template": config.get(section, "text_template").strip() if config.has_option(section, "text_template") else os.path.dirname(__file__) + "/templates/notify.tmpl.txt",
-            "html_template": config.get(section, "html_template").strip() if config.has_option(section, "html_template") else None
+            "html_template": config.get(section, "html_template").strip() if config.has_option(section, "html_template") else None,
+            "object": config.get(section, "object").strip() if config.has_option(section, "object") else "password"
         })
 
     c['rules'] = sorted(c['rules'], key=lambda r: r['days'])

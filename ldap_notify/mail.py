@@ -70,7 +70,8 @@ class MailHandler(object):
             'rule_days': str(rule.days),
             'cn': user.cn,
             'dn': user.dn,
-            'fullname': user.fullName if user.fullName else "Unknown User"
+            'fullname': user.fullName if user.fullName else "Unknown User",
+            'object': rule.object
         }
         
         # send where?

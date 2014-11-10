@@ -1,0 +1,6 @@
+Dear $fullname,
+
+your $object is going to expire within $days_left days on $expiry_date.
+
+Best regards,
+  Your Admin Team
