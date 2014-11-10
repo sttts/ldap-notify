@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from distutils.core import setup
+import distutils.sysconfig
 
 setup(name='ldap_notify',
 	description='LDAP Login/Password Email Notification Service',
@@ -8,9 +9,9 @@ setup(name='ldap_notify',
     author_email='stefan.schimanski@gmail.com',
     url='https://github.com/sttts/ldap_notify',
     packages=['ldap_notify'],
-    #data_files=[
-    #	('/etc/ldap-notify', ['login.conf', 'password.conf']),
-    #],
-    package_data = {'edir_autoyast_ws': ['templates/*']},
-    py_modules = ['ldap_notify_main']
+    data_files=[
+    	(distutils.sysconfig.get_config_var('prefix') + '/etc/ldap-notify', ['conf/login.conf', 'conf/password.conf']),
+    ],
+    package_data = {'ldap-notify': ['templates/*']},
+    scripts = [ 'scripts/ldap-notify' ]
 )
