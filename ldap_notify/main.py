@@ -87,6 +87,7 @@ def main(argv):
 		test_address = None
 		restrict_to_users = None
 		print_conf = None
+		config_file = None
 	
 		# parse arguments	
 		try:
@@ -117,10 +118,11 @@ def main(argv):
 				restrict_to_users = arg
 			elif opt in ['--print-conf']:
 				print_conf = True
-	
-		if not config_file or args:
+
+		# no args allow other than options
+		if args:
 			usage()
-			raise SysExitException(2)
+			return 2
 			
 		# set globals
 		g.DEBUG = debug
@@ -132,26 +134,31 @@ def main(argv):
 					format='%(asctime)s %(levelname)s: %(message)s')
 
 		# load configuration
-		config_file = ldap_notify.config.load(filename=config_file)
+		preconfig = ldap_notify.config.load(filename=config_file)
 		
 		# merge config with values from command line
-		if ignore_cert!=None:      config_file.set('common', 'ignore_cert', 'true' if ignore_cert else 'false')
-		if dry!=None:              config_file.set('common', 'dry', 'true' if dry else 'false')
-		if test!=None:             config_file.set('test', 'enabled', 'true' if test else 'false')
-		if test_address!=None:     config_file.set('test', 'to_address', test_address)
-		if restrict_to_users!=None:config_file.set('common', 'restrict_to_users', restrict_to_users)
+		if ignore_cert!=None:      preconfig.set('common', 'ignore_cert', 'true' if ignore_cert else 'false')
+		if dry!=None:              preconfig.set('common', 'dry', 'true' if dry else 'false')
+		if test!=None:             preconfig.set('test', 'enabled', 'true' if test else 'false')
+		if test_address!=None:     preconfig.set('test', 'to_address', test_address)
+		if restrict_to_users!=None:preconfig.set('common', 'restrict_to_users', restrict_to_users)
 
 		# evaluate config_file
-		config = ldap_notify.config.evaluate(config_file)
+		config = ldap_notify.config.evaluate(preconfig)
 		log.debug('dry = %s, %s' % (str(dry), str(config.dry)))
 
 		# print config only?
 		if print_conf:
 			import StringIO
 			f = StringIO.StringIO()
-			config_file.write(f)
+			preconfig.write(f)
 			print f.getvalue()
 			return 0
+		
+		# only proceed if a config_file was given. Especially --print-conf should work without
+		if not config_file:
+			usage()
+			return 2
 
 		# the actual code doing stuff
 		run(config)

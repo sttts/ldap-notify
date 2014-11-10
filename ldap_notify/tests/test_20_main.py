@@ -39,7 +39,7 @@ class TestMain(unittest.TestCase):
         self.assertFalse(mock_run.called)
 
     @patch('ldap_notify.main.run')
-    def test_030_main_does_not_run_without_config(self, mock_run):
+    def test_035_main_does_not_run_without_config(self, mock_run):
         rc = main([])
         self.assertEqual(rc, 2)
         self.assertFalse(mock_run.called)
@@ -126,7 +126,35 @@ class TestMain(unittest.TestCase):
     @patch('sys.stdout', new_callable=StringIO)
     @patch('sys.stderr', new_callable=StringIO)
     @patch('ldap_notify.main.run')
-    def test_120_print_conf_config_can_be_read_again(self, mock_run, mock_stderr, mock_stdout):
+    def test_115_print_conf_config_can_be_read_again_and_is_the_same(self, mock_run, mock_stderr, mock_stdout):
+        # call
+        rc = main(['--dry', '--print-conf'])
+        self.assertEqual(rc, 0)
+        self.assertEqual(mock_stderr.getvalue(), '')
+        self.assertFalse(mock_run.called)
+        
+        # write config into file
+        config_string = mock_stdout.getvalue()
+        import tempfile
+        f = tempfile.NamedTemporaryFile(delete=False)
+        f.write(config_string)
+        f.close()
+        
+        try:
+            with patch('sys.stdout', new_callable=StringIO) as mock_stdout:    
+                # use temp file as config
+                rc = main(['-c', f.name, '--print-conf'])
+                self.assertEqual(rc, 0)
+                self.assertEqual(mock_stderr.getvalue(), '')
+                self.assertFalse(mock_run.called)
+                self.assertEqual(config_string, mock_stdout.getvalue())
+        finally:
+            os.remove(f.name)
+
+    @patch('sys.stdout', new_callable=StringIO)
+    @patch('sys.stderr', new_callable=StringIO)
+    @patch('ldap_notify.main.run')
+    def test_120_print_conf_config_includes_user_config(self, mock_run, mock_stderr, mock_stdout):
         # call
         rc = main(['-c', os.path.dirname(__file__) + "/password.conf", '--dry', '--print-conf'])
         self.assertEqual(rc, 0)
