@@ -213,15 +213,47 @@ In addition in case of any of the following conditions only the admin is notifie
 - have an email address,
 - have grace login available.
 
+### Notify Attribute ###
+
+The algorithm stores the last sent notification and a timestamp in the ```notify_attribute``` (defined in the ```common```config section). The value has the following format:
+
+```
+20140116111356Z:30
+```
+
+It tells the algorithm that this user was notified at the given timestamp with a 30 days rule.
+
+### Notification Logic ###
+
+Assume that three rules are defined: 30, 7, 1 and ```passwordExpirationTime``` is used as the expiry attribute. Then three independent LDAP searches are performed, each of them with a filter of the following shape:
+
+```
+(&(objectClass=person)(!(loginDisabled=true))(&(passwordExpirationTime>=20141112173529Z)(!(passwordExpirationTime>=20141116173529Z))(!(loginGraceRemaining=0))))
+```
+
+The timestamps used are:
+
+- 1 days: ```passwordExpirationTime>=*24 HOURS FROM NOW*``` and ```passwordExpirationTime<*NOW*```
+- 7 days: ```passwordExpirationTime>=*7 DAYS FROM NOW*``` and ```passwordExpirationTime<*24 HOURS FROM NOW*```
+- 30 days: ```passwordExpirationTime>=*14*``` and ```passwordExpirationTime<*30 DAYS FROM NOW*```.
+
+To detect that the same notification was sent before, but to cope with old notify attribute values at the same time, the notify attribute is read, e.g. ```20130116111356Z:30```. This notify attribute timestamp is considered _old_ if
+
+- ```expirationTime - last_notify >= 30 days```
+- *or* the current applied rule (e.g. 7) is smaller than the last notified rule: ```7 < 30```.
+
+If neither condition matches, the notifiy attribute is current and the user is skipped.
+If at least one condition matches, the user is notified and a new notify attribute is written.
+
 ### Fault Tolerance ###
 
-Users are notified only once for each rule. The algorithm stores the last sent notification and a timestamp in the ```notify_attribute``` (defined in the ```common```config section). This allows to launch ```ldap-notify``` on multiple servers, *with a time delta to avoid overlap and race conditions*. If the first server fails, the second launch on the second server will notice this and send the notifications on behalf of the first instance.
+Users are notified only once for each rule. This allows to launch ```ldap-notify``` on multiple servers, *with a time delta to avoid overlap and race conditions*. If the first server fails, the second launch on the second server will notice this and send the notifications on behalf of the first instance.
 
 Moreover, ```ldap-notify``` will handle SMTP errors gracefully: if the SMTP connection fails, the notification attribute is not updated.
 
 If the notification attribute cannot be parsed (i.e. its format is invalid), the notification attribute is deleted before processing the user.
 
-### Development ###
+## Development ##
 
 ```ldap-notify``` is written in Python. The ```ldap-notify``` has no dependencies other than python-ldap. For development some more dependencies are needed which can be installed with pip:
 
