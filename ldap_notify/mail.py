@@ -10,6 +10,9 @@ from string import Template
 import ldap_notify.globals as g
 from ldap_notify import ConfigError
 
+def capitalize(line):
+    return ' '.join([s[0].upper() + s[1:] for s in line.split(' ')])
+
 class MailHandler(object):
     def __init__(self, config):
         self.config = config
@@ -71,8 +74,11 @@ class MailHandler(object):
             'cn': user.cn,
             'dn': user.dn,
             'fullname': user.fullName if user.fullName else "Unknown User",
+            
             'object': self.config.object,
-            'objects': self.config.objects
+            'objects': self.config.objects,
+            'Object': capitalize(self.config.object),
+            'Objects': capitalize(self.config.objects)
         }
         
         # send where?
@@ -125,8 +131,11 @@ class MailHandler(object):
             'failed_users_length': len(failed_lines),
             'users_without_email_length': len(without_email_lines),
             'no_grace_logins_length': len(no_grace_logins_lines),
+
             'object': self.config.object,
-            'objects': self.config.objects
+            'objects': self.config.objects,
+            'Object': capitalize(self.config.object),
+            'Objects': capitalize(self.config.objects),
         }
         admin_template = self.template(config.admin.text_template)
         msg = admin_template.substitute(template_env)

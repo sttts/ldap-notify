@@ -96,6 +96,7 @@ The configuration options have the following meaning:
 | common  | restrict_to_users | DN or CN list, separated by semi-colon, space, or newline | restrict actual sent mails and LDAP modification to the given CNs or DNs. Useful for testing | cn=admin,ou=users,dc=localhost;root;hschmidt; |
 | common  | user_objectclass | LDAP objectClass | an object class name to restrict the user search | pwmUser or person |
 | common  | object | string | the object this config talks about, used to allow unified templates for password and login configuration | password or login |
+| common  | objects | string | the plural string of object | passwords or logins |
 | smtp    | server | HOSTNAME[:PORT] | the mail server address | smtp.gmail.com |
 | smtp    | ssl | boolean | true if the server speaks SSL | true or false |
 | smtp    | starttls | boolean | use starttls after connecting with encryption | true or false |
@@ -190,6 +191,10 @@ In the case of user notification emails the following variables are interpolated
 | $cn | string | the common name of the user being notified | hschmidt |
 | $dn | DN | the DN of the user being notified | cn=hschmidt,ou=users,dc=localhost |
 | $fullname | string | the full name of the user being notified | Hans Schmidt |
+| $object | string | the object in singular, defined by ``object```in the configuration | password |
+| $objects | string | the object in plural, defined by ``objects```in the configuration | passwords |
+| $Object | string | the singular object with capital letter | Password |
+| $Objects | string | the plural object with capital letter | Passwords |
 
 ### Admin Report Emails ###
 
@@ -205,6 +210,10 @@ In the case of admin report emails the following variables are interpolated::
 | $failed_users_length | integer | number of rows in $failed_users | 0 |
 | $users_without_email_length | integer | number of rows in $users_without_email | 7 |
 | $no_grace_logins_length | integer | number of rows in $nno_grace_logins | 5 |
+| $object | string | the object in singular, defined by ``object```in the configuration | password |
+| $objects | string | the object in plural, defined by ``objects```in the configuration | passwords |
+| $Object | string | the singular object with capital letter | Password |
+| $Objects | string | the plural object with capital letter | Passwords |
 
 ## Search ##
 
