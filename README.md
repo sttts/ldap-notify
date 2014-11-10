@@ -120,6 +120,22 @@ text_template = <LDAP_NOTIFY_DIR>/templates/notify.tmpl.txt
 html_template =
 ```
 
+A quite minimal rules configuration with only one template (the default notify.tmpl.txt), but customized subject lines looks like this:
+
+```
+[30]
+from_text = Login Reminder
+subject = $weeks_left weeks left
+
+[7]
+from_text = Login Reminder
+subject = $days_left days left
+
+[1]
+from_text = Login Reminder
+subject = Tomorrow
+```
+
 The rule options have the following meaning:
 
 | Option  | Format   | Description | Examples |
