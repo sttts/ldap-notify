@@ -26,6 +26,8 @@ notify_attribute = pwmNotify
 dry = false
 restrict_to_users =
 user_objectclass = person
+object = password
+objects =
 
 [smtp]
 server =
@@ -85,6 +87,8 @@ def evaluate(config):
     c['user_objectclass'] = config.get("common", "user_objectclass").strip() or None
     c['dry'] = config.getboolean("common", "dry")
     c['restrict_to_users'] = restrict_user_list_parse(config.get("common", "restrict_to_users", "").strip())
+    c["object"] = config.get("common", "object").strip()
+    c["objects"] = config.get("common", "objects").strip() or (c["object"] + 's')
     
     c['smtp'] = {}
     c['smtp']['server'] = config.get("smtp", "server").strip() or None
@@ -118,8 +122,7 @@ def evaluate(config):
             "from_text": config.get(section, "from_text").strip() if config.has_option(section, "from_text") else c['admin']['from_text'],
             "subject": config.get(section, "subject").strip() if config.has_option(section, "subject") else "Login will expire soon",
             "text_template": config.get(section, "text_template").strip() if config.has_option(section, "text_template") else os.path.dirname(__file__) + "/templates/notify.tmpl.txt",
-            "html_template": config.get(section, "html_template").strip() if config.has_option(section, "html_template") else None,
-            "object": config.get(section, "object").strip() if config.has_option(section, "object") else "password"
+            "html_template": config.get(section, "html_template").strip() if config.has_option(section, "html_template") else None
         })
 
     c['rules'] = sorted(c['rules'], key=lambda r: r['days'])

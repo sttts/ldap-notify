@@ -71,7 +71,8 @@ class MailHandler(object):
             'cn': user.cn,
             'dn': user.dn,
             'fullname': user.fullName if user.fullName else "Unknown User",
-            'object': rule.object
+            'object': self.config.object,
+            'objects': self.config.objects
         }
         
         # send where?
@@ -124,6 +125,8 @@ class MailHandler(object):
             'failed_users_length': len(failed_lines),
             'users_without_email_length': len(without_email_lines),
             'no_grace_logins_length': len(no_grace_logins_lines),
+            'object': self.config.object,
+            'objects': self.config.objects
         }
         admin_template = self.template(config.admin.text_template)
         msg = admin_template.substitute(template_env)

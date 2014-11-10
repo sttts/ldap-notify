@@ -1,4 +1,4 @@
-The eDirectory Reminder Service completed a check-run for expiring passwords.
+The eDirectory Reminder Service completed a check-run for expiring ${objects}.
 
 Without email:        $users_without_email_length
 Without grace logins: $no_grace_logins_length

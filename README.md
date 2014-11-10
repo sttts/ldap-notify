@@ -56,6 +56,8 @@ notify_attribute = pwmNotify
 dry = false
 restrict_to_users =
 user_objectclass = person
+object = password
+objects =
 
 [smtp]
 server =
@@ -93,6 +95,7 @@ The configuration options have the following meaning:
 | common  | dry | boolean | If true, no mails are actually sent and no LDAP modifications take place. Can be overwritten with ```--dry```on the command line. | true or false |
 | common  | restrict_to_users | DN or CN list, separated by semi-colon, space, or newline | restrict actual sent mails and LDAP modification to the given CNs or DNs. Useful for testing | cn=admin,ou=users,dc=localhost;root;hschmidt; |
 | common  | user_objectclass | LDAP objectClass | an object class name to restrict the user search | pwmUser or person |
+| common  | object | string | the object this config talks about, used to allow unified templates for password and login configuration | password or login |
 | smtp    | server | HOSTNAME[:PORT] | the mail server address | smtp.gmail.com |
 | smtp    | ssl | boolean | true if the server speaks SSL | true or false |
 | smtp    | starttls | boolean | use starttls after connecting with encryption | true or false |
@@ -107,6 +110,8 @@ The configuration options have the following meaning:
 | test    | enabled | boolean | if true, all emails are sent to the test email address | true or false |
 | test    | to_address | email address | the test email address | root@localhost |
 
+The ```object``` string in the ```common```section can be used in the templates such that they work for password and login notification emails.
+
 ## Rules ##
 
 An arbitrary number of rules can be defined in the configuration file. The rules are named according to their number of days before an expiration date when the rule applies. E.g. a 30 day rule is called "30".
@@ -120,7 +125,6 @@ from_text = <ADMIN FROM TEXT>
 subject = Login will expire soon
 text_template = <LDAP_NOTIFY_DIR>/templates/notify.tmpl.txt
 html_template =
-object = password
 ```
 
 A quite minimal rules configuration with only one template (the default notify.tmpl.txt), but customized subject lines looks like this:
@@ -148,11 +152,8 @@ The rule options have the following meaning:
 | subject | string | the subject of a notification | expires in $days_left days
 | text_template | absolute filename | the text template for notification emails | /etc/ldap-notify/notify-30.tmpl.txt |
 | html_template | absolute filename | the html template for notification emails | /etc/ldap-notify/notify-30.tmpl.html |
-| object | string | the object this rule talks about, e.g. ```password```| password or login |
 
 The subject of the notification emails will be interpolated with the same variables as in the email template itself (cf. below).
-
-The ```object``` string can be used in the templates such that they work for password and login notification emails.
 
 ## Test Operation ##
 
