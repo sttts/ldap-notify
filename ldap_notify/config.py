@@ -8,7 +8,6 @@ from ldap_notify import ConfigError
 import ldap_notify.utils as utils
 import ldap_notify.globals as g
 
-SERVICE_NAME = "Login/Password Expiry Notification"
 HOSTNAME = socket.gethostname()
 
 # set defaults
@@ -40,7 +39,7 @@ password_base64 =
 [admin]
 from_address = {root_mail!s}
 to_address = {admin_mail!s}
-from_text = {service_name!s}
+from_text = $Object Expiry Notification
 subject = $Object will expire soon
 text_template = {text_template!s}
 
@@ -50,7 +49,6 @@ to_address = {root_mail!s}
 """.format(
     root_mail="root@" + HOSTNAME,
     admin_mail="admin@" + HOSTNAME,
-    service_name=SERVICE_NAME,
     text_template=os.path.dirname(__file__) + "/templates/admin.tmpl.txt"
 )
 
@@ -101,7 +99,7 @@ def evaluate(config):
     c['admin'] = {}
     c['admin']['from_address'] = config.get("admin", "from_address").strip() or None
     c['admin']['to_address'] = config.get("admin", "to_address").strip() or None
-    c['admin']['from_text'] = config.get("admin", "from_text").strip() or SERVICE_NAME
+    c['admin']['from_text'] = config.get("admin", "from_text").strip() or None
     c['admin']['subject'] = config.get("admin", "subject").strip() or None
     c['admin']['text_template'] = config.get("admin", "text_template").strip() or None
     
