@@ -156,6 +156,9 @@ The rule options have the following meaning:
 
 The subject of the notification emails will be interpolated with the same variables as in the email template itself (cf. below).
 
+By default, HTML mail templates are disabled. Next to the default text template there is also an example notify.tmpl.html
+which can be activated with the ```html_template``` option.
+
 ## Test Operation ##
 
 During test of the script it is highly suggested to use the ```--test```, the ```--dry```and ```--restrict``` options or the respective options in the configuration file.
