@@ -169,9 +169,9 @@ The debug parameter ```-d``` can be passed multiple times in order to increase t
 
 Email templates and email subjects for rules are interpolated with a number of variables. 
 
-### Rules Emails###
+### User Rule Emails###
 
-In the case of user notification emails:
+In the case of user notification emails the following variables are interpolated:
 
 | Variable  | Format | Description | Examples |
 |:------- |:-------- |:----------- |:---------|
@@ -184,9 +184,9 @@ In the case of user notification emails:
 | $dn | DN | the DN of the user being notified | cn=hschmidt,ou=users,dc=localhost |
 | $fullname | string | the full name of the user being notified | Hans Schmidt |
 
-### Admin  Emails ###
+### Admin Report Emails ###
 
-In the case of admin report emails:
+In the case of admin report emails the following variables are interpolated::
 
 | Variable  | Format | Description | Examples |
 |:------- |:-------- |:----------- |:---------|
