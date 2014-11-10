@@ -103,7 +103,8 @@ class MailHandler(object):
             
         # setting mail headers
         msg['Subject'] = Template(rule.subject).substitute(template_env)
-        msg['From'] = (rule.from_text + ' <' + rule.from_address +'>') if rule.from_text else rule.from_address
+        from_text = Template(rule.from_text).substitute(template_env) if rule.from_text else None
+        msg['From'] = (from_text + ' <' + rule.from_address +'>') if from_text else rule.from_address
         msg['To'] = to
         
         # send message
@@ -142,6 +143,7 @@ class MailHandler(object):
         
         # setting mail headers
         subject = Template(config.admin.subject).substitute(template_env)
+        from_text = Template(config.admin.from_text).substitute(template_env) if config.admin.from_text else None
         header = """Content-Type: text/plain; charset="utf-8"
 Subject: %s
 From: %s
@@ -149,7 +151,7 @@ To: %s
 
 """ % (
     subject,
-    (config.admin.from_text + ' <' + config.admin.from_address +'>') if config.admin.from_text else config.admin.from_address,
+    (from_text + ' <' + config.admin.from_address +'>') if from_text else config.admin.from_address,
     to
 )
 

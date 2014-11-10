@@ -41,7 +41,7 @@ password_base64 =
 from_address = {root_mail!s}
 to_address = {admin_mail!s}
 from_text = {service_name!s}
-subject = Login will expire soon
+subject = $Object will expire soon
 text_template = {text_template!s}
 
 [test]

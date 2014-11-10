@@ -175,7 +175,7 @@ The debug parameter ```-d``` can be passed multiple times in order to increase t
 
 ## Templates ##
 
-Email templates and email subjects for rules are interpolated with a number of variables. 
+Email templates, email subjects and email from strings for rules are interpolated with a number of variables. 
 
 ### User Rule Emails###
 
