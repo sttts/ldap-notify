@@ -150,7 +150,7 @@ The rule options have the following meaning:
 
 The subject of the notification emails will be interpolated with the same variables as in the email template itself (cf. below).
 
-The ``object``` string can be used in the templates such that they work for password and login notification emails.
+The ```object``` string can be used in the templates such that they work for password and login notification emails.
 
 ## Test Operation ##
 
