@@ -123,7 +123,7 @@ The default values of a 30 day rule:
 [30]
 from_address = <ADMIN FROM ADRESS>
 from_text = <ADMIN FROM TEXT>
-subject = Login will expire soon
+subject = $Object will expire soon
 text_template = <LDAP_NOTIFY_DIR>/templates/notify.tmpl.txt
 html_template =
 ```
