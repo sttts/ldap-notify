@@ -132,15 +132,12 @@ A quite minimal rules configuration with only one template (the default notify.t
 
 ```
 [30]
-from_text = Login Reminder
 subject = $weeks_left weeks left
 
 [7]
-from_text = Login Reminder
 subject = $days_left days left
 
 [1]
-from_text = Login Reminder
 subject = Tomorrow
 ```
 
