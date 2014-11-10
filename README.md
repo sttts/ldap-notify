@@ -118,6 +118,7 @@ from_text = <ADMIN FROM TEXT>
 subject = Login will expire soon
 text_template = <LDAP_NOTIFY_DIR>/templates/notify.tmpl.txt
 html_template =
+object = password
 ```
 
 A quite minimal rules configuration with only one template (the default notify.tmpl.txt), but customized subject lines looks like this:
@@ -145,8 +146,11 @@ The rule options have the following meaning:
 | subject | string | the subject of a notification | expires in $days_left days
 | text_template | absolute filename | the text template for notification emails | /etc/ldap-notify/notify-30.tmpl.txt |
 | html_template | absolute filename | the html template for notification emails | /etc/ldap-notify/notify-30.tmpl.html |
+| object | string | the object this rule talks about, e.g. ```password```| password or login |
 
 The subject of the notification emails will be interpolated with the same variables as in the email template itself (cf. below).
+
+The ``object``` string can be used in the templates such that they work for password and login notification emails.
 
 ## Test Operation ##
 
