@@ -77,7 +77,7 @@ def users_for_rule(config, con, rule):
                                 log.debug("Skipping %s because reminder %s was sent to admins before: %s" % (cn, last_rule, ldap_user[config.notify_attribute]))
                                 continue
                                                     
-                            if expiry - last_notify < timedelta(days=last_rule) and last_rule <= rule.days:
+                            if not (expiry - last_notify >= timedelta(days=last_rule) or last_rule > rule.days):
                                 if g.DEBUG > 1:
                                     log.debug("Skipping %s because reminder %s was sent before: %s" % (cn, last_rule, ldap_user[config.notify_attribute]))
                                 continue
