@@ -130,7 +130,13 @@ The configuration options have the following meaning:
 | `object` | string | the object this config talks about | password or login |
 | `objects` | string | the plural string of object | passwords or logins |
 
-The `DN or CN list` of `restrict_to_users is separated by semi-colons, spaces or newlines.
+The `DN or CN list` of `restrict_to_users is separated by semi-colons, spaces or newlines. A non-trivial example with a multi-line value is the following:
+
+```
+restrict_to_user = cn=alice,ou=users,dc=localhost
+	cn=bob,ou=users,dc=localhost
+	root;admin;operations
+```
 
 The `object` and `objects` values are only used in templates in order to allow unified templates for e.g. password and login configuration.
 
@@ -204,8 +210,7 @@ The rule options have the following meaning:
 
 The subject of the notification emails will be interpolated with the same variables as in the email template itself (cf. below).
 
-By default, HTML mail templates are disabled. Next to the default text template there is also an example notify.tmpl.html
-which can be activated with the `html_template` option.
+By default, HTML mail templates are disabled. Next to the default text template there is also an example notify.tmpl.html. By assigning a template to the html_template option, HTML mail templates will be enabled.
 
 Test Operation
 --------------
@@ -272,6 +277,8 @@ In the case of admin report emails the following variables are interpolated::
 
 The `object` and `objects` variables are defined by the very same options in the configuration. If `objects` is empty, a single `s` character is appended to the `object` value.
 
+The `..._length` variables count the number of lines in the respective `..._users` variables. These can be used to shows counters (e.g. of failed notifications) at the very top of the admin report.
+
 Search Algorithm
 ----------------
 
@@ -313,9 +320,9 @@ Assume that three rules are defined: 30, 7, 1 and `passwordExpirationTime` is us
 
 The timestamps used are:
 
-- 1 days: `passwordExpirationTime >= *24 HOURS FROM NOW*` and `passwordExpirationTime < *NOW*`
-- 7 days: `passwordExpirationTime >= *7 DAYS FROM NOW*` and `passwordExpirationTime < *24 HOURS FROM NOW*`
-- 30 days: `passwordExpirationTime >= *14*` and `passwordExpirationTime < *30 DAYS FROM NOW*`.
+- 1 days: `passwordExpirationTime >= *NOW*` and `passwordExpirationTime < *24 HOURS FROM NOW*`
+- 7 days: `passwordExpirationTime >= *24 HOURS FROM NOW*` and `passwordExpirationTime < *7 DAYS FROM NOW*`
+- 30 days: `passwordExpirationTime >= *7*` and `passwordExpirationTime < *30 DAYS FROM NOW*`.
 
 To detect that the same notification was sent before, but to cope with old notify attribute values at the same time, the notify attribute is read, e.g. `20130116111356Z:30`. This notify attribute timestamp is considered _old_ if
 
