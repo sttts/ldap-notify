@@ -170,7 +170,7 @@ def main(argv):
 		print >> sys.stderr, "Configuration error: %s" % str(e)
 		return 2
 	except ldap.LDAPError, e:
-		msg = e.args[0]['desc'] if 'desc' in e.args[0] else str(e)
+		msg = e.args[0]['desc'] if args in e and len(e.args)>=1 and 'desc' in e.args[0] else str(e)
 		print >> sys.stderr, "LDAP error: %s" % msg
 		return 1
 	except SMTPException, e:
