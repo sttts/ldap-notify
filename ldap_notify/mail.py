@@ -31,6 +31,8 @@ class MailHandler(object):
             s = smtplib.SMTP_SSL(timeout=10)
         else:
             s = smtplib.SMTP(timeout=10)
+        if g.DEBUG > 3:
+            s.set_debuglevel(True)
         s.connect(host=self.config.smtp.server)
         s.ehlo()
         log.debug("Connected to SMTP server")
