@@ -31,7 +31,7 @@ class TestRestrict(LocalLDAPTests):
     @patch('sys.stderr', new_callable=StringIO)
     @patch('ldap_notify.main.run', wraps=ldap_notify.main.run)
     @patch('smtplib.SMTP')
-    def test_10_only_sends_to_restricted_users_with_dn(self, mock_smtp, mock_run, mock_stderr):
+    def test_20_only_sends_to_restricted_users_with_dn(self, mock_smtp, mock_run, mock_stderr):
         # prepare users
         for days in [-2, 0.5, 2, 5, 9, 20, 35]:
             self.addUser(expire=days, mail=True)
