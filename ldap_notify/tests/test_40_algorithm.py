@@ -29,6 +29,7 @@ class TestAlgorithm(LocalLDAPTests):
     @patch('smtplib.SMTP')
     def test_15_finds_expired_users_in_all_base_contexts(self, mock_smtp, mock_run, mock_stderr):
         self.addUser(name='lazyadmin', expire=12, mail=True, ou='ou=admins,dc=localhost')
+        self.addUser(name='lostadmin', expire=12, mail=True, ou='ou=nirvana,dc=localhost')
 
         rc = main(['-c', os.path.dirname(__file__) + "/password.conf"])
         self.assertEqual(mock_stderr.getvalue(), '')
@@ -36,6 +37,70 @@ class TestAlgorithm(LocalLDAPTests):
 
         SMTP = mock_smtp.return_value
         self.assertEqual(SMTP.sendmail.call_count, 2)
+        
+    @patch('sys.stderr', new_callable=StringIO)
+    @patch('ldap_notify.main.run', wraps=ldap_notify.main.run)
+    @patch('smtplib.SMTP')
+    def test_16_does_not_find_users_without_subtree_search(self, mock_smtp, mock_run, mock_stderr):
+        self.addUser(name='lazyadmin', expire=12, mail=True, ou='ou=admins,dc=localhost')
+        self.addUser(name='lostadmin', expire=12, mail=True, ou='ou=nirvana,dc=localhost')
+        self.addUser(expire=3, mail=True)
+        
+        original_evaluate = ldap_notify.config.evaluate
+        class setup_subtree_search:
+            def __call__(self, preconfig):
+                preconfig.set('common', 'base_dn', 'dc=localhost')
+                return original_evaluate(preconfig)
+        with patch('ldap_notify.config.evaluate', new_callable=setup_subtree_search):
+            rc = main(['-c', os.path.dirname(__file__) + "/password.conf"])
+            self.assertEqual(mock_stderr.getvalue(), '')
+            self.assertEqual(rc, 0)
+    
+            SMTP = mock_smtp.return_value
+            self.assertEqual(SMTP.sendmail.call_count, 1)
+            
+    @patch('sys.stderr', new_callable=StringIO)
+    @patch('ldap_notify.main.run', wraps=ldap_notify.main.run)
+    @patch('smtplib.SMTP')
+    def test_17_finds_expired_users_with_a_subtree_search(self, mock_smtp, mock_run, mock_stderr):
+        self.addUser(name='lazyadmin', expire=12, mail=True, ou='ou=admins,dc=localhost')
+        self.addUser(name='lostadmin', expire=12, mail=True, ou='ou=nirvana,dc=localhost')
+        self.addUser(expire=3, mail=True)
+        
+        original_evaluate = ldap_notify.config.evaluate
+        class setup_subtree_search:
+            def __call__(self, preconfig):
+                preconfig.set('common', 'base_dn', 'dc=localhost')
+                preconfig.set('common', 'subtree_search', 'true')
+                return original_evaluate(preconfig)
+        with patch('ldap_notify.config.evaluate', new_callable=setup_subtree_search):
+            rc = main(['-c', os.path.dirname(__file__) + "/password.conf"])
+            self.assertEqual(mock_stderr.getvalue(), '')
+            self.assertEqual(rc, 0)
+    
+            SMTP = mock_smtp.return_value
+            self.assertEqual(SMTP.sendmail.call_count, 4)
+            
+    @patch('sys.stderr', new_callable=StringIO)
+    @patch('ldap_notify.main.run', wraps=ldap_notify.main.run)
+    @patch('smtplib.SMTP')
+    def test_18_finds_expired_users_with_a_subtree_root_search(self, mock_smtp, mock_run, mock_stderr):
+        self.addUser(name='lazyadmin', expire=12, mail=True, ou='ou=admins,dc=localhost')
+        self.addUser(name='lostadmin', expire=12, mail=True, ou='ou=nirvana,dc=localhost')
+        self.addUser(expire=3, mail=True)
+        
+        original_evaluate = ldap_notify.config.evaluate
+        class setup_subtree_search:
+            def __call__(self, preconfig):
+                preconfig.set('common', 'base_dn', '')
+                return original_evaluate(preconfig)
+        with patch('ldap_notify.config.evaluate', new_callable=setup_subtree_search):
+            rc = main(['-c', os.path.dirname(__file__) + "/password.conf"])
+            self.assertEqual(mock_stderr.getvalue(), '')
+            self.assertEqual(rc, 0)
+    
+            SMTP = mock_smtp.return_value
+            self.assertEqual(SMTP.sendmail.call_count, 4)
 
     @patch('sys.stderr', new_callable=StringIO)
     @patch('ldap_notify.main.run', wraps=ldap_notify.main.run)

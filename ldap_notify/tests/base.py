@@ -32,6 +32,7 @@ class LocalLDAPTests(unittest.TestCase):
     # This is the content of our mock LDAP directory. It takes the form
     # {dn: {attr: [value, ...], ...}, ...}.
     directory = dict([
+        ('', {}), # the root
         ('dc=localhost', {'dc': ['localhost']}),
         ('ou=users,dc=localhost', {'ou': ['users']}),
         ('ou=admins,dc=localhost', {'ou': ['users']}),
