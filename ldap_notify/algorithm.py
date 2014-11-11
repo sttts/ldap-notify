@@ -58,7 +58,7 @@ def users_for_rule(config, con, rule):
                     def fix_user():
                         log.warn("%sDeleting invalid attribute of %s: '%s: %s'" % ('DRY: ' if config.dry else 'TEST:' if config.test.enabled else '',
                                                                                  cn, config.notify_attribute, notify_attribute_value))
-                        if not config.dry:
+                        if not config.dry and not config.test.enabled:
                             con.modify_s(cn, [
                                 (ldap.MOD_DELETE, config.notify_attribute)
                             ])
