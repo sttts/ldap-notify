@@ -36,7 +36,7 @@ OPTIONS
 `--test` *test-address*
   send all mails to the given address
 
-`--restrict` *DN*;*CN*;...*
+`--restrict` *DN*;*CN*;...
   restrict notifications to these semicolon separated user DNs or CNs
   
 `--time` *timestamp*
