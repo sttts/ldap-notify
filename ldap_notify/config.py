@@ -19,7 +19,8 @@ bind_password =
 bind_password_base64 =
 starttls = false
 ignore_cert = false
-base_context = 
+base_dn =
+subtree_search = false 
 expiry_attribute = passwordExpirationTime
 notify_attribute = pwmNotify
 dry = false
@@ -55,9 +56,9 @@ to_address = {root_mail!s}
 def flatten(l):
     return list(x for sublist in l for x in sublist)
 
-def restrict_user_list_parse(s):
+def dn_list_parse(s):
     lst = s.replace(';', '\n').replace(' ', '\n').split('\n')
-    return set(filter(None, lst))
+    return filter(None, lst)
 
 # load config file
 def load(filename = None):
@@ -79,12 +80,13 @@ def evaluate(config):
     c['bind_password_base64'] = config.get("common", "bind_password_base64").strip() or None
     c['starttls'] = config.getboolean("common", "starttls")
     c['ignore_cert'] = config.getboolean("common", "ignore_cert")
-    c['base_context'] = config.get("common", "base_context").strip() or None
+    c['base_dn'] = dn_list_parse(config.get("common", "base_dn").strip())
+    c['subtree_search'] = config.getboolean("common", "subtree_search") or c['base_dn'] == []
     c['expiry_attribute'] = config.get("common", "expiry_attribute").strip() or None
     c['notify_attribute'] = config.get("common", "notify_attribute").strip() or None
     c['user_objectclass'] = config.get("common", "user_objectclass").strip() or None
     c['dry'] = config.getboolean("common", "dry")
-    c['restrict_to_users'] = restrict_user_list_parse(config.get("common", "restrict_to_users", "").strip())
+    c['restrict_to_users'] = set(dn_list_parse(config.get("common", "restrict_to_users", "").strip()))
     c["object"] = config.get("common", "object").strip()
     c["objects"] = config.get("common", "objects").strip() or (c["object"] + 's')
     

@@ -13,7 +13,6 @@ def error_connect_to_ldap(config):
     raise ldap.LDAPError('Mock LDAP Error')
 
 class TestMain(unittest.TestCase):
-    
     @patch('sys.stdout', new_callable=StringIO)
     @patch('sys.stderr', new_callable=StringIO)
     def test_010_shows_help(self, mock_stderr, mock_stdout):

@@ -67,9 +67,10 @@ server = ldap://localhost
 bind_dn =
 bind_password =
 bind_password_base64 =
+base_dn =
+subtree_search = false 
 starttls = false
 ignore_cert = false
-base_context = 
 expiry_attribute = passwordExpirationTime
 notify_attribute = pwmNotify
 dry = false
@@ -115,15 +116,17 @@ l l l l
 l l l l
 l l l l
 l l l l
+l l l l
 .
 Option	Format	Description	Examples
 \fB\fCserver\fR	RFC 4516	the server LDAP URI	\fB\fCldap://host:389\fR or \fB\fCldaps://host\fR
 \fB\fCbind_dn\fR	DN or empty	the DN to bind to; can be empty	\fB\fCcn=admin,ou=users,dc=localhost\fR
 \fB\fCbind_password\fR	string	the password to be used during binding	secret
 \fB\fCbind_password_base64\fR	base64 encoded string	an encoded bind password	\fB\fCYWRtaW5fc2VjcmV0\fR
+\fB\fCbase_dn\fR	DN list	the base DNs to start a search at	\fB\fCou=users,dc=localhost;ou=admins,dc=localhost\fR or empty
+`subtree_search	boolean	do a SUBTREE or ONELEVEL search	true or false
 \fB\fCstarttls\fR	boolean	use starttls on a ldap:// connection	true or false
 \fB\fCignore_cert\fR	boolean	don't check server SSL/TLS certificate	true or false
-\fB\fCbase_context\fR	DN or empty	the base DN to start a subtree search at	\fB\fCou=users,dc=localhost\fR or empty for the root context
 \fB\fCexpiry_attribute\fR	LDAP attribute	the attribute holding the expiration timestamp	passwordExpirationTime
 \fB\fCnotify_attribute\fR	LDAP attribute	the attribute used to store sent notifications	pwmNotify
 \fB\fCdry\fR	boolean	don't send mails or modify LDAP	
@@ -132,6 +135,8 @@ Option	Format	Description	Examples
 \fB\fCobject\fR	string	the object this config talks about	password or login
 \fB\fCobjects\fR	string	the plural string of object	passwords or logins
 .TE
+.PP
+The \fB\fCDN list\fR of \fB\fCbase_dn\fR is separated by semi\-colons, spaces or newlines. An empty \fB\fCbase_dn\fR implies \fB\fCsubstree_search = true\fR and means to start the search at the dictionary root.
 .PP
 The \fB\fCDN or CN list\fR of `restrict\fIto\fPusers is separated by semi\-colons, spaces or newlines. A non\-trivial example with a multi\-line value is the following:
 .PP

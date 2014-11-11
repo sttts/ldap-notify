@@ -28,9 +28,10 @@ class TestConfig(unittest.TestCase):
         c = ldap_notify.config.evaluate(ldap_notify.config.load(os.path.dirname(__file__) + "/password-tls.conf"))
         
         self.assertEqual(c.server, 'ldap://ldap')
-        self.assertEqual(c.base_context, 'dc=localhost')
-        self.assertEqual(c.bind_dn, 'cn=admin,ou=users,dc=localhost')
-        self.assertEqual(c.bind_password, 'admin_secret')
+        self.assertEqual(c.base_dn, ['ou=users,dc=localhost','ou=admins,dc=localhost'])
+        self.assertEqual(c.subtree_search, False)
+        self.assertEqual(c.bind_dn, 'cn=root,ou=admins,dc=localhost')
+        self.assertEqual(c.bind_password, 'root_secret')
         self.assertEqual(c.starttls, True)
         self.assertEqual(c.expiry_attribute, 'passwordExpirationTime')
         self.assertEqual(c.notify_attribute, 'pwmNotify')

@@ -78,9 +78,10 @@ server = ldap://localhost
 bind_dn =
 bind_password =
 bind_password_base64 =
+base_dn =
+subtree_search = false 
 starttls = false
 ignore_cert = false
-base_context = 
 expiry_attribute = passwordExpirationTime
 notify_attribute = pwmNotify
 dry = false
@@ -119,9 +120,10 @@ The configuration options have the following meaning:
 | `bind_dn` | DN or empty | the DN to bind to; can be empty | `cn=admin,ou=users,dc=localhost` |
 | `bind_password` | string | the password to be used during binding | secret |
 | `bind_password_base64` | base64 encoded string | an encoded bind password | `YWRtaW5fc2VjcmV0` |
+| `base_dn` | DN list | the base DNs to start a search at | `ou=users,dc=localhost;ou=admins,dc=localhost` or empty |
+| `subtree_search | boolean | do a SUBTREE or ONELEVEL search | true or false |
 | `starttls` | boolean | use starttls on a ldap:// connection | true or false |
 | `ignore_cert` | boolean | don't check server SSL/TLS certificate | true or false |
-| `base_context` | DN or empty | the base DN to start a subtree search at | `ou=users,dc=localhost` or empty for the root context |
 | `expiry_attribute` | LDAP attribute | the attribute holding the expiration timestamp | passwordExpirationTime |
 | `notify_attribute` | LDAP attribute | the attribute used to store sent notifications | pwmNotify |
 | `dry` | boolean | don't send mails or modify LDAP |
@@ -129,6 +131,8 @@ The configuration options have the following meaning:
 | `user_objectclass` | LDAP objectClass | an object class name to restrict the user search | pwmUser or person |
 | `object` | string | the object this config talks about | password or login |
 | `objects` | string | the plural string of object | passwords or logins |
+
+The `DN list` of `base_dn` is separated by semi-colons, spaces or newlines. An empty `base_dn` implies `substree_search = true` and means to start the search at the dictionary root.
 
 The `DN or CN list` of `restrict_to_users is separated by semi-colons, spaces or newlines. A non-trivial example with a multi-line value is the following:
 

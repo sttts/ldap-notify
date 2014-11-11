@@ -27,6 +27,19 @@ class TestAlgorithm(LocalLDAPTests):
     @patch('sys.stderr', new_callable=StringIO)
     @patch('ldap_notify.main.run', wraps=ldap_notify.main.run)
     @patch('smtplib.SMTP')
+    def test_15_finds_expired_users_in_all_base_contexts(self, mock_smtp, mock_run, mock_stderr):
+        self.addUser(name='lazyadmin', expire=12, mail=True, ou='ou=admins,dc=localhost')
+
+        rc = main(['-c', os.path.dirname(__file__) + "/password.conf"])
+        self.assertEqual(mock_stderr.getvalue(), '')
+        self.assertEqual(rc, 0)
+
+        SMTP = mock_smtp.return_value
+        self.assertEqual(SMTP.sendmail.call_count, 2)
+
+    @patch('sys.stderr', new_callable=StringIO)
+    @patch('ldap_notify.main.run', wraps=ldap_notify.main.run)
+    @patch('smtplib.SMTP')
     def test_20_sends_notification_only_once(self, mock_smtp, mock_run, mock_stderr):
         # prepare users
         for days in [-2, 0.5, 2, 5, 9, 20, 35]:

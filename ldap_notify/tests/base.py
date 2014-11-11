@@ -8,8 +8,8 @@ import ldap_notify.globals as g
 def ldap_time(**kwargs):
     return (datetime.datetime.utcnow() + timedelta(**kwargs)).strftime(g.LDAP_TIME_FORMAT)
 
-def ldap_user(name, mail=None, pwmUser=True, expire=45, notify_string=None, grace=3, disabled=False, fullName=None):
-    dn = 'cn=%s,ou=users,dc=localhost' % name
+def ldap_user(name, mail=None, ou='ou=users,dc=localhost', pwmUser=True, expire=45, notify_string=None, grace=3, disabled=False, fullName=None):
+    dn = 'cn=%s,%s' % (name, ou)
     pwd = '%s_secret' % name
     attr = {
         'cn': [name],
@@ -34,15 +34,16 @@ class LocalLDAPTests(unittest.TestCase):
     directory = dict([
         ('dc=localhost', {'dc': ['localhost']}),
         ('ou=users,dc=localhost', {'ou': ['users']}),
+        ('ou=admins,dc=localhost', {'ou': ['users']}),
         ldap_user('ceo', 'ceo@localhost'),
         ldap_user('cto', 'cto@localhost'),
         ldap_user('bob', 'bob@localhost'),
         ldap_user('http', pwmUser=False),
         ldap_user('alice', 'alice@localhost'),
-        ldap_user('admin', 'alice@localhost')
+        ldap_user('root', 'root@localhost', ou='ou=admins,dc=localhost')
     ])
     
-    def addUser(self, name=None, mail=None, expire=None, notified=None, disabled=False, grace=3):
+    def addUser(self, name=None, mail=None, ou='ou=users,dc=localhost', expire=None, notified=None, disabled=False, grace=3):
         if not name:
             if expire < 0:
                 name = "expired_%i_days_ago" % -expire
@@ -58,7 +59,7 @@ class LocalLDAPTests(unittest.TestCase):
         else:
             notify_string = None
       
-        dn, attrs = ldap_user(name, mail=mail, expire=expire, notify_string=notify_string, grace=grace, disabled=disabled)
+        dn, attrs = ldap_user(name, mail=mail, ou=ou, expire=expire, notify_string=notify_string, grace=grace, disabled=disabled)
         print 'Adding user dn=%s: %r' % (dn, attrs)
         self.ldapobj.add_s(dn, attrs.items())
     
