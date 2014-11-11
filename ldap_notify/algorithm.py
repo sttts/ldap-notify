@@ -46,7 +46,7 @@ def search_users_without_grace_logins(config, con):
 def users_for_rule(config, con, rule):
     users = search_users(config, con, "(&(%s>=%s)(!(%s>=%s))(!(loginGraceRemaining=0)))" % (config.expiry_attribute, rule.start, config.expiry_attribute, rule.end))    
     result = []
-    for cn, ldap_user in users:
+    for dn, ldap_user in users:
         # filter out those whose notify attribute shows a notification in less of the days of this rule
         if config.notify_attribute in ldap_user:
             try:
@@ -57,10 +57,10 @@ def users_for_rule(config, con, rule):
                         
                     def fix_user():
                         log.warn("%sDeleting invalid attribute of %s: '%s: %s'" % ('DRY: ' if config.dry else 'TEST:' if config.test.enabled else '',
-                                                                                 cn, config.notify_attribute, notify_attribute_value))
+                                                                                 dn, config.notify_attribute, notify_attribute_value))
                         if not config.dry and not config.test.enabled:
-                            con.modify_s(cn, [
-                                (ldap.MOD_DELETE, config.notify_attribute)
+                            con.modify_s(dn, [
+                                (ldap.MOD_DELETE, config.notify_attribute, notify_attribute_value)
                             ])
 
                     if len(parts) != 2:
@@ -77,26 +77,26 @@ def users_for_rule(config, con, rule):
                             # skip users without email: their notification is only sent once to the admins.
                             # At this point this happened already.
                             if 'mail' not in ldap_user:
-                                log.debug("Skipping %s because reminder %s was sent to admins before: %s" % (cn, last_rule, ldap_user[config.notify_attribute]))
+                                log.debug("Skipping %s because reminder %s was sent to admins before: %s" % (dn, last_rule, ldap_user[config.notify_attribute]))
                                 continue
                                                     
                             if not (expiry - last_notify >= timedelta(days=last_rule) or last_rule > rule.days):
                                 if g.DEBUG > 1:
-                                    log.debug("Skipping %s because reminder %s was sent before: %s" % (cn, last_rule, ldap_user[config.notify_attribute]))
+                                    log.debug("Skipping %s because reminder %s was sent before: %s" % (dn, last_rule, ldap_user[config.notify_attribute]))
                                 continue
                     
                 # users without email will notify the admin later
                 if 'mail' not in ldap_user:
-                    log.info("User %s has no email" % cn)
+                    log.info("User %s has no email" % dn)
             except ValueError, e:
-                log.exception('Skipping %s because: %s' % (cn, str(e)))
+                log.exception('Skipping %s because: %s' % (dn, str(e)))
                 continue
             except Exception, e:
                 log.exception(e)
                 continue
 
-        log.debug('Found %s with %s=%s to be notified with rule %i' % (cn, config.expiry_attribute, ldap_user[config.expiry_attribute][0], rule.days))
-        result.append(ldap_user_to_user(config, cn, ldap_user))
+        log.debug('Found %s with %s=%s to be notified with rule %i' % (dn, config.expiry_attribute, ldap_user[config.expiry_attribute][0], rule.days))
+        result.append(ldap_user_to_user(config, dn, ldap_user))
 
     return result
 
