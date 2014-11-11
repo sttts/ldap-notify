@@ -2,7 +2,7 @@
 
 from setuptools import setup
 
-setup(name='ldap_notify',
+setup(name='ldap-notify',
 	description='LDAP Login/Password Email Notification Service',
 	version='0.8.0',
 	long_description="""\
