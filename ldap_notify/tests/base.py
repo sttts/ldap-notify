@@ -16,7 +16,7 @@ def ldap_user(name, mail=None, ou='ou=users,dc=localhost', pwmUser=True, expire=
         'dn': [dn],
         'userPassword': [pwd],
         'passwordExpirationTime': [ldap_time(days=expire)],
-        'loginGraceRemaining': [grace],
+        'loginGraceRemaining': [str(grace)],
         'loginDisabled': ['true' if disabled else 'false'],
         'objectClass': ['top', 'person'] + ['pwmUser'] if pwmUser else [],
         'fullName': fullName if fullName else name
