@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 from distutils.core import setup
-import distutils.sysconfig
 
 setup(name='ldap_notify',
 	description='LDAP Login/Password Email Notification Service',
