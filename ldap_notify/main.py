@@ -98,7 +98,7 @@ def main(argv):
 		for opt, arg in opts:
 			if opt in ['-h', '--help']:
 				usage()
-				raise SysExitException(0)
+				return 0
 			elif opt in ['--test']:
 				test = True
 				test_address = arg
