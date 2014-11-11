@@ -105,6 +105,27 @@ class TestAlgorithm(LocalLDAPTests):
     @patch('sys.stderr', new_callable=StringIO)
     @patch('ldap_notify.main.run', wraps=ldap_notify.main.run)
     @patch('smtplib.SMTP')
+    def test_19_does_only_find_users_with_user_objectclass(self, mock_smtp, mock_run, mock_stderr):
+        self.addUser(name='lazyadmin', expire=12, mail=True, ou='ou=admins,dc=localhost')
+        self.addUser(name='lostadmin', expire=12, mail=True, ou='ou=nirvana,dc=localhost')
+        self.addUser(expire=3, mail=True)
+        
+        original_evaluate = ldap_notify.config.evaluate
+        class setup_subtree_search:
+            def __call__(self, preconfig):
+                preconfig.set('common', 'user_objectclass', 'hero')
+                return original_evaluate(preconfig)
+        with patch('ldap_notify.config.evaluate', new_callable=setup_subtree_search):
+            rc = main(['-c', os.path.dirname(__file__) + "/password.conf"])
+            self.assertEqual(mock_stderr.getvalue(), '')
+            self.assertEqual(rc, 0)
+    
+            SMTP = mock_smtp.return_value
+            self.assertEqual(SMTP.sendmail.call_count, 1)
+
+    @patch('sys.stderr', new_callable=StringIO)
+    @patch('ldap_notify.main.run', wraps=ldap_notify.main.run)
+    @patch('smtplib.SMTP')
     def test_20_sends_notification_only_once(self, mock_smtp, mock_run, mock_stderr):
         # prepare users
         for days in [-2, 0.5, 2, 5, 9, 20, 35]:
