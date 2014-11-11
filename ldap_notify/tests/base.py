@@ -15,12 +15,13 @@ def ldap_user(name, mail=None, ou='ou=users,dc=localhost', pwmUser=True, expire=
         'cn': [name],
         'dn': [dn],
         'userPassword': [pwd],
-        'passwordExpirationTime': [ldap_time(days=expire)],
+        'passwordExpirationTime': [ldap_time(days=expire, minutes=10)],
         'loginGraceRemaining': [str(grace)],
         'loginDisabled': ['true' if disabled else 'false'],
-        'objectClass': ['top', 'person'] + ['pwmUser'] if pwmUser else [],
-        'fullName': fullName if fullName else name
+        'objectClass': ['top', 'person'] + ['pwmUser'] if pwmUser else []
     }
+    if fullName is not None:
+        attr['fullName'] = [fullName]
     if mail is not None:
         attr['mail'] = [mail]
     if notify_string is not None:
@@ -44,7 +45,7 @@ class LocalLDAPTests(unittest.TestCase):
         ldap_user('root', 'root@localhost', ou='ou=admins,dc=localhost')
     ])
     
-    def addUser(self, name=None, mail=None, ou='ou=users,dc=localhost', expire=None, notified=None, disabled=False, grace=3):
+    def addUser(self, name=None, mail=None, fullName=None, ou='ou=users,dc=localhost', expire=None, notified=None, disabled=False, grace=3):
         if not name:
             if expire < 0:
                 name = "expired_%i_days_ago" % -expire
@@ -60,7 +61,7 @@ class LocalLDAPTests(unittest.TestCase):
         else:
             notify_string = None
       
-        dn, attrs = ldap_user(name, mail=mail, ou=ou, expire=expire, notify_string=notify_string, grace=grace, disabled=disabled)
+        dn, attrs = ldap_user(name, mail=mail, fullName=fullName, ou=ou, expire=expire, notify_string=notify_string, grace=grace, disabled=disabled)
         print 'Adding user dn=%s: %r' % (dn, attrs)
         self.ldapobj.add_s(dn, attrs.items())
     

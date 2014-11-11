@@ -73,7 +73,7 @@ class MailHandler(object):
             'rule_days': str(rule.days),
             'cn': user.cn,
             'dn': user.dn,
-            'fullname': user.fullName if user.fullName else "Unknown User",
+            'fullname': user.fullName if user.fullName else user.cn,
             
             'object': self.config.object,
             'objects': self.config.objects,
@@ -85,34 +85,51 @@ class MailHandler(object):
         to = user.mail if (not self.config.test.enabled) or restricted or self.config.dry else self.config.test.to_address
         
         # send what?
-        if rule.html_template:
-            html_msg = MIMEText(self.template(rule.html_template).substitute(template_env), 'html', 'utf-8')
-        if rule.text_template:
-            text_msg = MIMEText(self.template(rule.text_template).substitute(template_env), 'plain', 'utf-8')
+        subject = Template(rule.subject).substitute(template_env)
+        from_text = Template(rule.from_text).substitute(template_env) if rule.from_text else None
+        verbose_from = (from_text + ' <' + rule.from_address +'>') if from_text else rule.from_address
         
-        if rule.html_template and rule.text_template:
-            msg = MIMEMultipart('alternative')
-            msg.attach(html_msg)
-            msg.attach(text_msg)
-        elif rule.html_template:
-            msg = html_msg
+        if rule.text_template:
+            text = self.template(rule.text_template).substitute(template_env)
+        if rule.html_template:
+            # create mime body
+            html_msg = MIMEText(self.template(rule.html_template).substitute(template_env), 'html', 'utf-8')
+            if rule.text_template:
+                text_msg = MIMEText(text, 'plain', 'utf-8')
+                mime_msg = MIMEMultipart('alternative')
+                mime_msg.attach(html_msg)
+                mime_msg.attach(text_msg)
+            else:
+                mime_msg = html_msg
+
+            # setting mime mail headers
+            mime_msg['Subject'] = subject
+            mime_msg['From'] = verbose_from
+            mime_msg['To'] = to
+            
+            # convert to string
+            msg = mime_msg.as_string()
         elif rule.text_template:
-            msg = text_msg
+            header = """Content-Type: text/plain; charset="utf-8"
+Subject: %s
+From: %s
+To: %s
+
+""" % (
+    subject,
+    verbose_from,
+    to
+)
+            msg = header + text
         else:
             raise ConfigError('Neither text_template nor html_template is defined for rule ' + str(rule.days))
-            
-        # setting mail headers
-        msg['Subject'] = Template(rule.subject).substitute(template_env)
-        from_text = Template(rule.from_text).substitute(template_env) if rule.from_text else None
-        msg['From'] = (from_text + ' <' + rule.from_address +'>') if from_text else rule.from_address
-        msg['To'] = to
         
         # send message
-        log.info('%sSending mail for %s to %s: %s' % ('RESTRICTED: ' if restricted else 'DRY: ' if self.config.dry else '', user.cn, to, msg['Subject']))
+        log.info('%sSending mail for %s to %s: %s' % ('RESTRICTED: ' if restricted else 'DRY: ' if self.config.dry else '', user.cn, to, subject))
         if not restricted and not self.config.dry:
             try:
                 smtp_con = self.smtp_connection()
-                smtp_con.sendmail(rule.from_address, to, msg.as_string())
+                smtp_con.sendmail(rule.from_address, to, msg)
             except smtplib.SMTPException:
                 self.close_con()
                 raise
