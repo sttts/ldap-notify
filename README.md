@@ -70,7 +70,7 @@ second_attribute = multi
 
 The multi-line value is useful for long lists like in the `restrict_to_users` value.
 
-The default configuration is the following:
+The default configuration is the following (call `ldap-notify` with the `--print-conf` parameter to print it):
 
 ```
 [common]
@@ -99,15 +99,15 @@ password =
 password_base64 =
 
 [admin]
-from_address = root@*HOSTNAME*
-to_address = admin@*HOSTNAME*
+from_address = root@<HOSTNAME>
+to_address = admin@<HOSTNAME>
 from_text = $Object Expiry Notification
 subject = $Object Expiry Notification Report
-text_template = *LDAP_NOTIFY_DIR*/templates/admin.tmpl.txt
+text_template = <LDAP_NOTIFY_DIR>/templates/admin.tmpl.txt
 
 [test]
 enabled = false
-to_address = root@*HOSTNAME*
+to_address = root@<HOSTNAME>
 ```
 
 The configuration options have the following meaning:
@@ -185,7 +185,7 @@ The default values of a 30 day rule:
 from_address = *ADMIN FROM ADRESS*
 from_text = *ADMIN FROM TEXT*
 subject = $Object will expire soon
-text_template = *LDAP_NOTIFY_DIR*/templates/notify.tmpl.txt
+text_template = <LDAP_NOTIFY_DIR>/templates/notify.tmpl.txt
 html_template =
 ```
 
