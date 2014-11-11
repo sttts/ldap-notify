@@ -28,10 +28,10 @@ class MailHandler(object):
         
         log.debug("Connecting to SMTP server '%s'" % self.config.smtp.server)
         if self.config.smtp.ssl:
-            s = smtplib.SMTP_SSL(host=self.config.smtp.server, timeout=30)
+            s = smtplib.SMTP_SSL(timeout=10)
         else:
-            s = smtplib.SMTP(host=self.config.smtp.server, timeout=30)
-        s.connect()
+            s = smtplib.SMTP(timeout=10)
+        s.connect(host=self.config.smtp.server)
         s.ehlo()
         log.debug("Connected to SMTP server")
         if self.config.smtp.starttls:
