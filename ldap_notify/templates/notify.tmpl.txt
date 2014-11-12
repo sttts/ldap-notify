@@ -2,5 +2,7 @@ Dear $fullname,
 
 your $object is going to expire within $days_left days on $expiry_date.
 
+You still have $grace logins left.
+
 Best regards,
   Your Admin Team

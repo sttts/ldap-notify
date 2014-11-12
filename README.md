@@ -257,6 +257,7 @@ In the case of user notification emails the following variables are interpolated
 | `$objects` | string | the object in plural, defined by `objects` in the configuration | passwords |
 | `$Object` | string | the singular object with capital letter | Password |
 | `$Objects` | string | the plural object with capital letter | Passwords |
+| `$grace` | integer | the number of grace commits | 3 |
 
 The `object` and `objects` variables are defined by the very same options in the configuration. If `objects` is empty, a single `s` character is appended to the `object` value.
 

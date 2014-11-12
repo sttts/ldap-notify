@@ -54,6 +54,7 @@ class TestMail(LocalLDAPTests):
             self.assertGrep(r"^From: %s <%s>$" % (config.rules[user_rule[i]].from_text.replace('$Object', '.*'), config.admin.from_address), lines)
             self.assertIn('To: %s' % user_mails[i], lines)
             self.assertIn('Dear %s,' % user_fullNames[i], lines)
+            self.assertGrep(r'3 logins left', lines)
             self.assertGrep(r'within %i days' % user_days[i], lines)
 
     @patch('sys.stderr', new_callable=StringIO)

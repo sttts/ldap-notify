@@ -76,6 +76,7 @@ class MailHandler(object):
             'cn': user.cn,
             'dn': user.dn,
             'fullname': user.fullName if user.fullName else user.cn,
+            'grace': str(user.loginGraceRemaining),
             
             'object': self.config.object,
             'objects': self.config.objects,

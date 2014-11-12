@@ -293,6 +293,7 @@ l l l l
 l l l l
 l l l l
 l l l l
+l l l l
 .
 Variable	Format	Description	Examples
 \fB\fC$expiry_date\fR	string	the localized (according to the LANG setting) date of the expiration timestamp	\fB\fC12.10.2014\fR for LANG=de_DE
@@ -307,6 +308,7 @@ Variable	Format	Description	Examples
 \fB\fC$objects\fR	string	the object in plural, defined by \fB\fCobjects\fR in the configuration	passwords
 \fB\fC$Object\fR	string	the singular object with capital letter	Password
 \fB\fC$Objects\fR	string	the plural object with capital letter	Passwords
+\fB\fC$grace\fR	integer	the number of grace commits	3
 .TE
 .PP
 The \fB\fCobject\fR and \fB\fCobjects\fR variables are defined by the very same options in the configuration. If \fB\fCobjects\fR is empty, a single \fB\fCs\fR character is appended to the \fB\fCobject\fR value.
