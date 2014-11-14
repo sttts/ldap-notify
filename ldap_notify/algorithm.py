@@ -25,7 +25,8 @@ def ldap_user_to_user(config, cn, ldap_user):
         config.notify_attribute: None,
         config.expiry_attribute: None,
         'fullName': None,
-        'rule': None
+        'rule': None,
+        'loginGraceRemaining': None
     }
     for attr in ldap_user:
         if attr==config.notify_attribute:
