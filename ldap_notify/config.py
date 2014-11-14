@@ -86,7 +86,7 @@ def evaluate(config):
     c['notify_attribute'] = config.get("common", "notify_attribute").strip() or None
     c['user_objectclass'] = config.get("common", "user_objectclass").strip() or None
     c['dry'] = config.getboolean("common", "dry")
-    c['restrict_to_users'] = set(dn_list_parse(config.get("common", "restrict_to_users", "").strip()))
+    c['restrict_to_users'] = set(dn_list_parse(config.get("common", "restrict_to_users", "").strip().lower()))
     c["object"] = config.get("common", "object").strip()
     c["objects"] = config.get("common", "objects").strip() or (c["object"] + 's')
     

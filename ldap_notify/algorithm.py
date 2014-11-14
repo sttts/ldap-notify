@@ -117,7 +117,7 @@ def notify_users(config, con, users, rule):
     notified = []
     for user in users:
         try:
-            restricted = config.restrict_to_users and not (user.cn in config.restrict_to_users or user.dn in config.restrict_to_users)
+            restricted = config.restrict_to_users and not (user.cn.lower() in config.restrict_to_users or user.dn.lower() in config.restrict_to_users)
             mailer.send_user_mail(rule, user, restricted)
             mark_user_notified(config, con, user, rule, restricted)
             notified.append(user)
