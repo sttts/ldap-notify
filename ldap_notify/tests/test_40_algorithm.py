@@ -283,6 +283,20 @@ class TestAlgorithm(LocalLDAPTests):
         self.assertEqual(rc, 0)
         SMTP = mock_smtp.return_value
         self.assertEqual(SMTP.sendmail.call_count, 5)
+        
+    @patch('sys.stderr', new_callable=StringIO)
+    @patch('ldap_notify.main.run', wraps=ldap_notify.main.run)
+    @patch('smtplib.SMTP')
+    def test_80_handles_users_without_grace_login_attribute(self, mock_smtp, mock_run, mock_stderr):
+        self.addUser(expire=11, mail=True, grace=2)
+        self.addUser(expire=23, mail=True, grace=None)
+
+        # call tool one time
+        rc = main(['-c', os.path.dirname(__file__) + "/password.conf"])
+        self.assertEqual(mock_stderr.getvalue(), '')
+        self.assertEqual(rc, 0)
+        SMTP = mock_smtp.return_value
+        self.assertEqual(SMTP.sendmail.call_count, 3)
 
 if __name__ == '__main__':
     import nose

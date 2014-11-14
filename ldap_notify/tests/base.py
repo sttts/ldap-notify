@@ -16,7 +16,6 @@ def ldap_user(name, mail=None, ou='ou=users,dc=localhost', pwmUser=True, expire=
         'dn': [dn],
         'userPassword': [pwd],
         'passwordExpirationTime': [ldap_time(days=expire, minutes=10)],
-        'loginGraceRemaining': [str(grace)],
         'loginDisabled': ['true' if disabled else 'false'],
         'objectClass': ['top', 'person'] + ['pwmUser'] if pwmUser else []
     }
@@ -26,6 +25,8 @@ def ldap_user(name, mail=None, ou='ou=users,dc=localhost', pwmUser=True, expire=
         attr['mail'] = [mail]
     if notify_string is not None:
         attr['pwmNotify'] = [notify_string]
+    if grace is not None:
+        attr['loginGraceRemaining'] = [str(grace)]
 
     return (dn, attr)
 
