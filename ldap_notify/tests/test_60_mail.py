@@ -100,6 +100,7 @@ class TestMail(LocalLDAPTests):
         self.addUser(name='no_mail', expire=3, mail=None)
         self.addUser(name='not_expired', expire=43, mail=True)
         self.addUser(name='no_grace', expire=3, mail=True, grace=0)
+        self.addUser(name='no_grace_no_expiry', expire=None, mail=True, grace=0)
         self.addUser(name='disabled', expire=3, mail=True, disabled=True)
         
         # call tool
@@ -123,7 +124,7 @@ class TestMail(LocalLDAPTests):
         self.assertGrep(r"^Subject: %s$" % (config.admin.subject.replace('$Object', '.*')), lines)
         self.assertGrep(r"^From: %s <%s>$" % (config.admin.from_text.replace('$Object', '.*'), config.admin.from_address), lines)
         self.assertIn('To: %s' % config.admin.to_address, lines)
-        self.assertGrep(r"Without grace logins: *1$", lines)
+        self.assertGrep(r"Without grace logins: *2$", lines)
         self.assertGrep(r"^Without email: *1$", lines)
         self.assertGrep(r'^Failed: *0$', lines)
         self.assertGrep(r'^Notified: *2$', lines)

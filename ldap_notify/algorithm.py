@@ -22,8 +22,8 @@ def ldap_user_to_user(config, cn, ldap_user):
         'dn': cn,
         'cn': None,
         'mail': None,
-        config.notify_attribute: None,
-        config.expiry_attribute: None,
+        'notify': None,
+        'expiry': None,
         'fullName': None,
         'rule': None,
         'loginGraceRemaining': None
@@ -133,7 +133,7 @@ def user_to_rule_line(user, rule):
         user.dn, 
         (user.mail+', ') if user.mail else '', 
         ("%i Days Rule, " % user.rule.days) if user.rule else '',
-        str(datetime.strptime(user.expiry, '%Y%m%d%H%M%SZ')))
+        str(datetime.strptime(user.expiry, '%Y%m%d%H%M%SZ')) if user.expiry else 'none')
 
 
 def notify_admin(config, con, notified_users, failed_users, users_without_email, users_without_grace_logins):
